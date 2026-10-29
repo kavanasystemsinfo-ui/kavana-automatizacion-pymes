@@ -14,7 +14,8 @@ informe.kavanasystems.com {
 	}
 
 	handle / {
-		redir /form/informe-turno 302
+		# El * hace falta: sin él, Caddy toma la primera ruta como filtro y no como destino.
+		redir * /form/informe-turno 302
 	}
 
 	handle {
