@@ -1,5 +1,6 @@
 # Bloque para /etc/caddy/Caddyfile. Publica solo:
-#   - el formulario de uso real (/form/*)
+#   - el formulario de uso real (/form/*) y el de ausencias de RRHH (también /form/*)
+#   - los botones Aprobar/Rechazar de los correos (/webhook-waiting/*, enlaces firmados por n8n)
 #   - el panel de la demo (/demo/, archivos estáticos de /var/www/informe-demo)
 #   - las dos rutas de la API de la demo (/webhook/demo-api/informes e /informe)
 # El editor de n8n, el resto de webhooks (incluido /webhook/demo-seed) y la API interna no salen a internet.
@@ -12,7 +13,7 @@ informe.kavanasystems.com {
 		-Server
 	}
 
-	@formulario path /form/* /form-waiting/*
+	@formulario path /form/* /form-waiting/* /webhook-waiting/*
 	handle @formulario {
 		reverse_proxy 127.0.0.1:5678
 	}

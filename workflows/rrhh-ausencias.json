@@ -1,0 +1,591 @@
+{
+  "id": "RrhhAusencias001",
+  "name": "RRHH · Solicitud de ausencias",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid"
+  },
+  "nodes": [
+    {
+      "id": "7a1c4e20-5d3b-4f6a-8c11-000000000001",
+      "name": "Formulario",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.4,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "9b2e6d44-3a7f-4c18-b5d0-6e1f2a3c4d5e",
+      "parameters": {
+        "formTitle": "Solicitud de ausencias",
+        "formDescription": "Demo de RRHH con empleados inventados. La responsable recibe un correo con dos botones y tú recibes su respuesta.",
+        "formFields": {
+          "values": [
+            {
+              "fieldName": "empleado",
+              "fieldLabel": "Empleado",
+              "fieldType": "dropdown",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Marta Soler"
+                  },
+                  {
+                    "option": "Iván Ruiz"
+                  },
+                  {
+                    "option": "Laura Gómez"
+                  },
+                  {
+                    "option": "Sergio Mata"
+                  },
+                  {
+                    "option": "Nuria Ferrer"
+                  },
+                  {
+                    "option": "Carmen Vidal"
+                  },
+                  {
+                    "option": "Hugo Ortiz"
+                  },
+                  {
+                    "option": "Pablo Cano"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldName": "tipo",
+              "fieldLabel": "Tipo de ausencia",
+              "fieldType": "dropdown",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Vacaciones"
+                  },
+                  {
+                    "option": "Asuntos propios"
+                  },
+                  {
+                    "option": "Permiso retribuido"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldName": "desde",
+              "fieldLabel": "Desde",
+              "fieldType": "date",
+              "requiredField": true
+            },
+            {
+              "fieldName": "hasta",
+              "fieldLabel": "Hasta (incluido)",
+              "fieldType": "date",
+              "requiredField": true
+            },
+            {
+              "fieldName": "comentario",
+              "fieldLabel": "Comentario",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "path": "rrhh-ausencias",
+          "appendAttribution": false,
+          "buttonLabel": "Enviar solicitud"
+        }
+      }
+    },
+    {
+      "id": "7a1c4e20-5d3b-4f6a-8c11-000000000002",
+      "name": "Asegurar tabla",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "rrhh_solicitudes",
+        "columns": {
+          "column": [
+            {
+              "name": "fecha_solicitud",
+              "type": "string"
+            },
+            {
+              "name": "empleado",
+              "type": "string"
+            },
+            {
+              "name": "email",
+              "type": "string"
+            },
+            {
+              "name": "departamento",
+              "type": "string"
+            },
+            {
+              "name": "tipo",
+              "type": "string"
+            },
+            {
+              "name": "desde",
+              "type": "string"
+            },
+            {
+              "name": "hasta",
+              "type": "string"
+            },
+            {
+              "name": "dias",
+              "type": "number"
+            },
+            {
+              "name": "saldo_previo",
+              "type": "number"
+            },
+            {
+              "name": "estado",
+              "type": "string"
+            },
+            {
+              "name": "comentario",
+              "type": "string"
+            },
+            {
+              "name": "conflictos",
+              "type": "string"
+            },
+            {
+              "name": "decidido_en",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      }
+    },
+    {
+      "id": "7a1c4e20-5d3b-4f6a-8c11-000000000003",
+      "name": "Leer solicitudes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        0
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "rrhh_solicitudes"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "estado",
+              "condition": "neq",
+              "keyValue": "Rechazada"
+            },
+            {
+              "keyName": "estado",
+              "condition": "neq",
+              "keyValue": "Caducada"
+            }
+          ]
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "7a1c4e20-5d3b-4f6a-8c11-000000000004",
+      "name": "Calcular",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Valida la solicitud, cuenta los días laborables y comprueba saldo, solapes y coincidencias con el equipo.\nconst f = $('Formulario').first().json;\nconst filas = $input.all().map((i) => i.json).filter((r) => r.empleado);\n\nconst DIAS_ANUALES = 22;\nconst EMPLEADOS = {\n  'Marta Soler': { email: 'kavanasystems.info+marta.soler@gmail.com', departamento: 'Producción' },\n  'Iván Ruiz': { email: 'kavanasystems.info+ivan.ruiz@gmail.com', departamento: 'Producción' },\n  'Laura Gómez': { email: 'kavanasystems.info+laura.gomez@gmail.com', departamento: 'Producción' },\n  'Sergio Mata': { email: 'kavanasystems.info+sergio.mata@gmail.com', departamento: 'Logística' },\n  'Nuria Ferrer': { email: 'kavanasystems.info+nuria.ferrer@gmail.com', departamento: 'Administración' },\n  'Carmen Vidal': { email: 'kavanasystems.info+carmen.vidal@gmail.com', departamento: 'Administración' },\n  'Hugo Ortiz': { email: 'kavanasystems.info+hugo.ortiz@gmail.com', departamento: 'Comercial' },\n  'Pablo Cano': { email: 'kavanasystems.info+pablo.cano@gmail.com', departamento: 'Calidad' }\n};\nconst TIPOS = ['Vacaciones', 'Asuntos propios', 'Permiso retribuido'];\n// Festivos nacionales fijos y Viernes Santo de 2026 y 2027.\nconst FESTIVOS = ['01-01', '01-06', '05-01', '08-15', '10-12', '11-01', '12-06', '12-08', '12-25'];\nconst VIERNES_SANTO = ['2026-04-03', '2027-03-26'];\n\nconst fail = (error) => [{ json: { error } }];\nconst dia = (s) => {\n  const m = /^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(String(s || ''));\n  if (!m) return null;\n  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));\n  return Number.isNaN(d.getTime()) ? null : d;\n};\nconst iso = (d) => d.toISOString().slice(0, 10);\nconst DIA_MS = 24 * 3600 * 1000;\n\nconst emp = EMPLEADOS[f.empleado];\nif (!emp) return fail('Empleado no reconocido.');\nif (!TIPOS.includes(f.tipo)) return fail('Tipo de ausencia no válido.');\nconst desde = dia(f.desde);\nconst hasta = dia(f.hasta);\nif (!desde || !hasta) return fail('Indica las dos fechas.');\nif (hasta < desde) return fail('La fecha final no puede ser anterior a la inicial.');\nconst hoy = dia($now.setZone('Europe/Madrid').toFormat('yyyy-MM-dd'));\nif ((hoy - desde) / DIA_MS > 7) return fail('No se pueden pedir ausencias de hace más de una semana.');\nif ((desde - hoy) / DIA_MS > 366) return fail('No se pueden pedir ausencias con más de un año de antelación.');\nif ((hasta - desde) / DIA_MS > 30) return fail('Cada solicitud admite como máximo 31 días seguidos.');\n\nconst laborable = (d) => {\n  const s = iso(d);\n  const w = d.getUTCDay();\n  return w !== 0 && w !== 6 && !FESTIVOS.includes(s.slice(5)) && !VIERNES_SANTO.includes(s);\n};\nlet dias = 0;\nfor (let d = new Date(desde); d <= hasta; d = new Date(d.getTime() + DIA_MS)) if (laborable(d)) dias++;\nif (!dias) return fail('Esas fechas son fin de semana o festivo: no suman días laborables.');\n\nconst solapa = (r) => String(r.desde) <= iso(hasta) && String(r.hasta) >= iso(desde);\nconst mias = filas.filter((r) => r.empleado === f.empleado);\nif (mias.some(solapa)) return fail('Ya tienes una solicitud pendiente o aprobada que coincide con esas fechas.');\nif (mias.filter((r) => r.estado === 'Pendiente').length >= 3) return fail('Ya tienes 3 solicitudes pendientes de respuesta.');\nif (filas.filter((r) => r.estado === 'Pendiente').length >= 20) return fail('Ahora mismo hay demasiadas solicitudes pendientes en la demo. Prueba más tarde.');\n\nconst anio = String(desde.getUTCFullYear());\nconst reservados = mias\n  .filter((r) => r.tipo === 'Vacaciones' && String(r.desde).startsWith(anio))\n  .reduce((a, r) => a + Number(r.dias), 0);\nconst saldo = DIAS_ANUALES - reservados;\nif (f.tipo === 'Vacaciones' && dias > saldo) {\n  return fail(`Pides ${dias} días de vacaciones y te quedan ${saldo} en ${anio}.`);\n}\n\nconst coincidencias = filas\n  .filter((r) => r.empleado !== f.empleado && r.departamento === emp.departamento && solapa(r))\n  .map((r) => `${r.empleado} (${r.desde} a ${r.hasta}, ${String(r.estado).toLowerCase()})`);\n\nreturn [{\n  json: {\n    fecha_solicitud: $now.setZone('Europe/Madrid').toFormat('yyyy-MM-dd HH:mm'),\n    empleado: f.empleado,\n    email: emp.email,\n    departamento: emp.departamento,\n    tipo: f.tipo,\n    desde: iso(desde),\n    hasta: iso(hasta),\n    dias,\n    saldo_previo: saldo,\n    estado: 'Pendiente',\n    comentario: String(f.comentario || '').trim().slice(0, 300),\n    conflictos: coincidencias.join('; '),\n    decidido_en: '',\n  },\n}];\n"
+      }
+    },
+    {
+      "id": "7a1c4e20-5d3b-4f6a-8c11-000000000005",
+      "name": "¿Válida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ !$json.error }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "7a1c4e20-5d3b-4f6a-8c11-000000000006",
+      "name": "Guardar solicitud",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "rrhh_solicitudes"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "7a1c4e20-5d3b-4f6a-8c11-000000000007",
+      "name": "Solicitud enviada",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1320,
+        0
+      ],
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "Solicitud enviada",
+        "completionMessage": "={{ $json.empleado }} · {{ $json.tipo.toLowerCase() }} del {{ $json.desde }} al {{ $json.hasta }} ({{ $json.dias }} días laborables). Tu responsable la revisará y recibirás su respuesta por correo.",
+        "options": {
+          "formTitle": "Solicitud de ausencias"
+        }
+      }
+    },
+    {
+      "id": "7a1c4e20-5d3b-4f6a-8c11-000000000008",
+      "name": "No se puede tramitar",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1100,
+        220
+      ],
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "No se puede tramitar",
+        "completionMessage": "={{ $json.error }}",
+        "options": {
+          "formTitle": "Solicitud de ausencias"
+        }
+      }
+    },
+    {
+      "id": "7a1c4e20-5d3b-4f6a-8c11-000000000009",
+      "name": "Preparar aviso",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Arma el correo para la responsable con los datos de la solicitud y las coincidencias del equipo.\nconst r = $('Guardar solicitud').first().json;\nconst lineas = [\n  `${r.empleado} (${r.departamento}) pide ${r.tipo.toLowerCase()}.`,\n  '',\n  `Fechas: del ${r.desde} al ${r.hasta} (${r.dias} días laborables)`,\n  `Vacaciones antes de esta solicitud: quedaban ${r.saldo_previo} de 22 días`,\n];\nif (r.comentario) lineas.push(`Comentario: ${r.comentario}`);\nlineas.push('');\nlineas.push(r.conflictos ? `⚠ Coincide con: ${r.conflictos}` : 'Sin coincidencias con su departamento.');\nreturn [{ json: {\n  asunto: `${r.conflictos ? '⚠ ' : ''}Solicitud de ${r.tipo.toLowerCase()} · ${r.empleado} · ${r.desde} a ${r.hasta}`,\n  mensaje: lineas.join('\\n'),\n} }];\n"
+      }
+    },
+    {
+      "id": "7a1c4e20-5d3b-4f6a-8c11-000000000010",
+      "name": "Pedir aprobación",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1760,
+        0
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "__SMTP_ID__",
+          "name": "SMTP Gmail Kavana"
+        }
+      },
+      "parameters": {
+        "operation": "sendAndWait",
+        "fromEmail": "RRHH demo <kavanasystems.info@gmail.com>",
+        "toEmail": "kavanasystems.info@gmail.com",
+        "subject": "={{ $json.asunto }}",
+        "message": "={{ $json.mensaje }}",
+        "responseType": "approval",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "Aprobar",
+            "buttonApprovalStyle": "primary",
+            "disapproveLabel": "Rechazar",
+            "buttonDisapprovalStyle": "secondary"
+          }
+        },
+        "options": {
+          "appendAttribution": false,
+          "limitWaitTime": {
+            "values": {
+              "limitType": "afterTimeInterval",
+              "resumeAmount": 5,
+              "resumeUnit": "days"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "7a1c4e20-5d3b-4f6a-8c11-000000000011",
+      "name": "Decisión",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Convierte la respuesta de la responsable en el estado final y el correo para el empleado.\nconst r = $('Guardar solicitud').first().json;\nconst a = $json.data && $json.data.approved;\nconst estado = a === true ? 'Aprobada' : a === false ? 'Rechazada' : 'Caducada';\nconst esc = (s) => String(s ?? '').replace(/[&<>\"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c]));\nconst saldo = estado === 'Aprobada' && r.tipo === 'Vacaciones' ? r.saldo_previo - r.dias : r.saldo_previo;\nconst frase = {\n  Aprobada: `Tu solicitud de ${r.tipo.toLowerCase()} ha sido <b>aprobada</b>.`,\n  Rechazada: `Tu solicitud de ${r.tipo.toLowerCase()} ha sido <b>rechazada</b>. Habla con tu responsable si necesitas más información.`,\n  Caducada: `Tu solicitud de ${r.tipo.toLowerCase()} <b>no ha tenido respuesta</b> en 5 días y se ha cerrado. Puedes volver a enviarla.`,\n}[estado];\nconst html = `<div style=\"font-family:Arial,sans-serif;font-size:14px;color:#1d2430\">\n<p>Hola ${esc(r.empleado.split(' ')[0])},</p>\n<p>${frase}</p>\n<p>Del ${esc(r.desde)} al ${esc(r.hasta)} · ${esc(r.dias)} días laborables.<br>\nVacaciones que te quedan este año: <b>${esc(saldo)}</b> de 22.</p>\n<p style=\"color:#5b6676\">Mensaje automático de la demo de RRHH. Todos los datos son inventados.</p></div>`;\nreturn [{ json: {\n  estado,\n  decidido_en: $now.setZone('Europe/Madrid').toFormat('yyyy-MM-dd HH:mm'),\n  email: r.email,\n  asunto: `Tu solicitud de ${r.tipo.toLowerCase()} (${r.desde} a ${r.hasta}): ${estado.toLowerCase()}`,\n  html,\n} }];\n"
+      }
+    },
+    {
+      "id": "7a1c4e20-5d3b-4f6a-8c11-000000000012",
+      "name": "Actualizar solicitud",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2200,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "rrhh_solicitudes"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Guardar solicitud').first().json.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "estado": "={{ $json.estado }}",
+            "decidido_en": "={{ $json.decidido_en }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "7a1c4e20-5d3b-4f6a-8c11-000000000013",
+      "name": "Avisar al empleado",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2420,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "smtp": {
+          "id": "__SMTP_ID__",
+          "name": "SMTP Gmail Kavana"
+        }
+      },
+      "parameters": {
+        "fromEmail": "RRHH demo <kavanasystems.info@gmail.com>",
+        "toEmail": "={{ $('Decisión').first().json.email }}",
+        "subject": "={{ $('Decisión').first().json.asunto }}",
+        "emailFormat": "html",
+        "html": "={{ $('Decisión').first().json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Formulario": {
+      "main": [
+        [
+          {
+            "node": "Asegurar tabla",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar tabla": {
+      "main": [
+        [
+          {
+            "node": "Leer solicitudes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer solicitudes": {
+      "main": [
+        [
+          {
+            "node": "Calcular",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular": {
+      "main": [
+        [
+          {
+            "node": "¿Válida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Válida?": {
+      "main": [
+        [
+          {
+            "node": "Guardar solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No se puede tramitar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar solicitud": {
+      "main": [
+        [
+          {
+            "node": "Solicitud enviada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Solicitud enviada": {
+      "main": [
+        [
+          {
+            "node": "Preparar aviso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar aviso": {
+      "main": [
+        [
+          {
+            "node": "Pedir aprobación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pedir aprobación": {
+      "main": [
+        [
+          {
+            "node": "Decisión",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decisión": {
+      "main": [
+        [
+          {
+            "node": "Actualizar solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar solicitud": {
+      "main": [
+        [
+          {
+            "node": "Avisar al empleado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}
