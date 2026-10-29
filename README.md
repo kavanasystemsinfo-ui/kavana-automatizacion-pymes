@@ -75,11 +75,25 @@ Formulario → Asegurar tabla → Calcular → Guardar informe → Confirmación
 - **Calcular**: valida los datos (números no negativos, objetivo mayor que 0, paradas de 480 min como máximo) y calcula la eficiencia (metros / objetivo), las paradas totales, el motivo principal y si hay aviso (eficiencia menor del 80 %).
 - **Confirmación**: el operario ve su eficiencia y sus minutos de parada.
 
+## Flujo "RRHH · Solicitud de ausencias"
+
+Un empleado pide vacaciones, asuntos propios o un permiso en un formulario (`/form/rrhh-ausencias`). La responsable recibe un correo con dos botones, Aprobar y Rechazar, y el empleado recibe su respuesta. Los empleados son ocho personas inventadas, y los correos de la demo salen siempre a una dirección propia (`...+nombre@gmail.com`).
+
+Formulario → Asegurar tabla → Leer solicitudes → Calcular → ¿Válida? → Guardar → Pedir aprobación (espera) → Decisión → Actualizar → Avisar al empleado
+
+- **Calcular** cuenta los días laborables (sin fines de semana ni festivos nacionales), comprueba el saldo de 22 días de vacaciones, que no se solape con otra solicitud suya y avisa a la responsable si coincide con alguien de su departamento. Si algo no cuadra, el empleado ve el motivo en pantalla y no se guarda nada.
+- **Pedir aprobación** usa el nodo de correo en modo "enviar y esperar": la ejecución queda parada hasta que la responsable pulsa un botón. Los enlaces van firmados por n8n y Caddy los publica en `/webhook-waiting/*`. Si nadie contesta en 5 días, la solicitud pasa a "Caducada".
+- **Límites de la demo**: máximo 3 solicitudes pendientes por empleado y 20 en total, para que una página pública no llene el correo ni deje ejecuciones colgadas.
+- **Datos**: tabla `rrhh_solicitudes` (estado Pendiente, Aprobada, Rechazada o Caducada). El saldo se calcula con las solicitudes aprobadas y pendientes del año, sin una segunda tabla.
+
+n8n ignora los clics que parecen de un robot (por ejemplo, `curl` sin navegador): para probar el botón desde la consola hay que enviar un `User-Agent` de navegador.
+
 ## Cargar y probar los flujos
 
 ```bash
 bash scripts/importar-flujos.sh     # importa workflows/*.json, los publica y reinicia n8n
 bash scripts/probar-formulario.sh   # envía 3 informes de prueba (92, 85 y 71 %)
+bash scripts/probar-ausencias.sh    # 2 solicitudes rechazadas por validación y 1 válida que espera la aprobación
 ```
 
 ## Instalación
