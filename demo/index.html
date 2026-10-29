@@ -25,6 +25,8 @@
   h2 { font-size: 16px; margin: 0 0 12px; }
   p { margin: 0 0 8px; }
   .muted { color: var(--muted); }
+  .nota { background: none; border: 0; padding: 0; font: inherit; color: var(--muted); text-decoration: underline; cursor: pointer; }
+  .detalle td { color: var(--muted); font-style: italic; padding-top: 0; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
   .intro { margin-bottom: 16px; }
   .aviso-demo { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: var(--card); border: 1px solid var(--line); font-size: 14px; }
@@ -188,10 +190,19 @@ function pintar() {
       <td class="num">${NF.format(f.metros)} / ${NF.format(f.objetivo)}</td>
       <td class="num"><span class="etq ${f.aviso ? 'mal' : 'ok'}">${pct(f.eficiencia)}</span></td>
       <td class="num">${f.paradas_total} min</td><td>${ESC(f.motivo_principal)}</td>
-      <td class="muted" title="${ESC(f.observaciones)}">${f.observaciones ? 'ver nota' : ''}</td>
-    </tr>`).join('') || '<tr><td colspan="9" class="muted">Sin informes con este filtro.</td></tr>';
+      <td class="muted">${f.observaciones ? '<button type="button" class="nota" aria-expanded="false">ver nota</button>' : ''}</td>
+    </tr>${f.observaciones ? `<tr class="detalle" hidden><td colspan="9">${ESC(f.observaciones)}</td></tr>` : ''}`).join('') || '<tr><td colspan="9" class="muted">Sin informes con este filtro.</td></tr>';
   document.getElementById('pie-tabla').textContent = v.length > 60 ? `Se muestran los 60 más recientes de ${v.length}.` : `${v.length} informes.`;
 }
+
+document.getElementById('filas').addEventListener('click', (e) => {
+  const b = e.target.closest('.nota');
+  if (!b) return;
+  const detalle = b.closest('tr').nextElementSibling;
+  detalle.hidden = !detalle.hidden;
+  b.setAttribute('aria-expanded', String(!detalle.hidden));
+  b.textContent = detalle.hidden ? 'ver nota' : 'ocultar';
+});
 
 function grafico(base) {
   const porDia = {};
