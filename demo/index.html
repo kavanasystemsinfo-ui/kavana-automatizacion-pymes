@@ -3,163 +3,370 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Automatización para pymes · demo</title>
-<meta name="description" content="Prueba sin instalar nada dos automatizaciones con n8n: el informe de turno de planta y las ausencias de RRHH con aprobación. Ves el correo que se enviaría, tu hoja y la descargas en Excel.">
+<title>Prueba la automatización · demo</title>
+<meta name="description" content="Prueba en un minuto, sin registrarte, cómo se automatizan el parte de fin de turno y las vacaciones de una pyme: formulario en el móvil, correo al responsable y hoja de Excel.">
 <style>
   :root {
-    --bg: #f6f7f9; --card: #fff; --text: #1d2430; --muted: #5b6676; --line: #e3e6ec;
-    --accent: #1f5fbf; --accent-text: #fff; --ok: #067647; --ok-bg: #e7f6ee;
-    --bad: #b42318; --bad-bg: #fdecea; --warn-bg: #fff7e0; --warn: #8a5a00;
-    --grid: #d5d9e0; --grid-head: #eef0f3; --nuevo: #fff3c4;
+    --bg: #f3f4f1; --panel: #ffffff; --ink: #1b1f23; --soft: #5d6670; --faint: #8a939c;
+    --line: #e2e4df; --line-strong: #cfd3cc;
+    --accent: #0f6e66; --accent-ink: #ffffff; --accent-soft: #e3f1ef;
+    --good: #18794e; --good-soft: #e5f4ec; --bad: #b42318; --bad-soft: #fdeceb;
+    --warn: #8a5300; --warn-soft: #fff4dc;
+    --xl: #1f7244; --xl-soft: #e8f3ec; --cell: #ffffff; --cell-head: #f1f3f0; --new: #fff6d1;
+    --phone: #1b1f23; --shadow: 0 1px 2px rgba(16,24,20,.06), 0 8px 24px rgba(16,24,20,.06);
+    --radius: 14px;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #12161c; --card: #1a2029; --text: #e8ecf2; --muted: #9aa5b5; --line: #2b3441;
-      --accent: #6ea2f0; --accent-text: #0d1522; --ok: #5fd39a; --ok-bg: #12301f;
-      --bad: #ff8a80; --bad-bg: #3a1815; --warn-bg: #332b12; --warn: #f0c060;
-      --grid: #344052; --grid-head: #232b37; --nuevo: #3d3415;
+      --bg: #131614; --panel: #1c201e; --ink: #e9ece8; --soft: #a5ada7; --faint: #79817b;
+      --line: #2c322e; --line-strong: #3a413c;
+      --accent: #4fb8ab; --accent-ink: #0b1a18; --accent-soft: #173330;
+      --good: #5fd39a; --good-soft: #143223; --bad: #ff8a80; --bad-soft: #3a1815;
+      --warn: #f0c060; --warn-soft: #33290f;
+      --xl: #5cc28a; --xl-soft: #16301f; --cell: #1c201e; --cell-head: #242a26; --new: #3a3315;
+      --phone: #000; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
     }
   }
   :root[data-theme="dark"] {
-    --bg: #12161c; --card: #1a2029; --text: #e8ecf2; --muted: #9aa5b5; --line: #2b3441;
-    --accent: #6ea2f0; --accent-text: #0d1522; --ok: #5fd39a; --ok-bg: #12301f;
-    --bad: #ff8a80; --bad-bg: #3a1815; --warn-bg: #332b12; --warn: #f0c060;
-    --grid: #344052; --grid-head: #232b37; --nuevo: #3d3415;
+    --bg: #131614; --panel: #1c201e; --ink: #e9ece8; --soft: #a5ada7; --faint: #79817b;
+    --line: #2c322e; --line-strong: #3a413c;
+    --accent: #4fb8ab; --accent-ink: #0b1a18; --accent-soft: #173330;
+    --good: #5fd39a; --good-soft: #143223; --bad: #ff8a80; --bad-soft: #3a1815;
+    --warn: #f0c060; --warn-soft: #33290f;
+    --xl: #5cc28a; --xl-soft: #16301f; --cell: #1c201e; --cell-head: #242a26; --new: #3a3315;
+    --phone: #000; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 56px; }
-  h1 { font-size: 24px; margin: 0 0 4px; }
-  h2 { font-size: 16px; margin: 0 0 12px; }
-  h2 .paso { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-size: 13px; margin-right: 6px; }
-  p { margin: 0 0 8px; }
-  .muted { color: var(--muted); }
-  .pequeno { font-size: 13px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0; }
-  .aviso-demo { margin: 12px 0 16px; padding: 10px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--text); font-size: 14px; }
-  .pestanas { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-  .pestanas button { font: inherit; font-weight: 600; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--text); cursor: pointer; }
-  .pestanas button[aria-selected="true"] { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
-  .que { margin-bottom: 16px; }
-  .rejilla { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-  form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-  label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
-  input, select, textarea { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; }
-  textarea { resize: vertical; min-height: 40px; }
-  form .ancho { grid-column: 1 / -1; }
-  .boton { font: inherit; font-weight: 600; padding: 9px 16px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-text); cursor: pointer; }
-  .boton.sec { background: transparent; color: var(--accent); }
-  .boton[disabled] { opacity: .6; cursor: wait; }
-  .boton.mini { padding: 2px 8px; font-size: 12px; border-radius: 6px; }
-  .error { margin-top: 10px; padding: 10px 12px; border-radius: 8px; background: var(--bad-bg); color: var(--bad); }
-  .correo { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-  .correo .cab { padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: 13px; background: var(--grid-head); }
-  .correo .cab div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .correo .cab b { display: inline-block; width: 56px; color: var(--muted); font-weight: 600; }
-  .correo iframe { display: block; width: 100%; border: 0; background: #fff; min-height: 120px; }
-  .correo .acciones { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--line); flex-wrap: wrap; align-items: center; }
-  .vacio { padding: 24px 12px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; }
-  .hoja-cab { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-  .hoja-cab h2 { margin: 0; }
-  .hoja { overflow-x: auto; border: 1px solid var(--grid); border-radius: 6px; }
-  .hoja table { border-collapse: collapse; font-size: 13px; min-width: 100%; }
-  .hoja th, .hoja td { border: 1px solid var(--grid); padding: 4px 8px; white-space: nowrap; text-align: left; }
-  .hoja thead th { background: var(--grid-head); color: var(--muted); font-weight: 500; text-align: center; font-size: 12px; }
-  .hoja tbody th { background: var(--grid-head); color: var(--muted); font-weight: 500; text-align: center; width: 36px; font-size: 12px; }
-  .hoja tr.titulos td { font-weight: 700; }
-  .hoja td.num { text-align: right; font-variant-numeric: tabular-nums; }
-  .hoja tr.nuevo td { background: var(--nuevo); }
-  .hoja td.mal { color: var(--bad); font-weight: 600; }
-  .hoja td.ok { color: var(--ok); font-weight: 600; }
-  .hoja td.nota { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
-  .pie { margin-top: 24px; font-size: 13px; color: var(--muted); }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased; }
+  main { max-width: 1120px; margin: 0 auto; padding: 28px 16px 64px; }
+  h1, h2, h3 { margin: 0; line-height: 1.25; }
+  p { margin: 0; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   [hidden] { display: none !important; }
-  @media (max-width: 760px) { .rejilla { grid-template-columns: 1fr; } }
+
+  /* Cabecera */
+  .hero { max-width: 720px; margin-bottom: 24px; }
+  .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  .hero h1 { font-size: clamp(26px, 4vw, 36px); letter-spacing: -.01em; margin-bottom: 10px; }
+  .hero p { color: var(--soft); font-size: 17px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--soft); background: var(--panel); border: 1px solid var(--line); padding: 4px 10px; border-radius: 999px; }
+  .chip svg { width: 14px; height: 14px; color: var(--good); }
+
+  /* Elegir trámite */
+  .elige { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .opcion { display: flex; gap: 14px; align-items: flex-start; text-align: left; padding: 16px; border-radius: var(--radius); border: 2px solid var(--line); background: var(--panel); cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+  .opcion:hover { border-color: var(--line-strong); }
+  .opcion[aria-selected="true"] { border-color: var(--accent); box-shadow: var(--shadow); }
+  .opcion .ico { flex: none; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+  .opcion .ico svg { width: 24px; height: 24px; }
+  .opcion b { display: block; font-size: 17px; margin-bottom: 2px; }
+  .opcion span { color: var(--soft); font-size: 14px; }
+
+  /* Pasos */
+  .pasos { display: flex; gap: 8px; list-style: none; padding: 0; margin: 0 0 16px; counter-reset: p; flex-wrap: wrap; }
+  .pasos li { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--faint); padding: 6px 12px 6px 6px; border-radius: 999px; background: transparent; }
+  .pasos li::before { counter-increment: p; content: counter(p); width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; border: 2px solid var(--line-strong); color: var(--faint); }
+  .pasos li.ahora { color: var(--ink); background: var(--panel); box-shadow: var(--shadow); }
+  .pasos li.ahora::before { border-color: var(--accent); color: var(--accent); }
+  .pasos li.hecho { color: var(--soft); }
+  .pasos li.hecho::before { content: "✓"; background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+  /* Escenario */
+  .escena { display: grid; grid-template-columns: 380px 1fr; gap: 20px; align-items: start; }
+  .zona-tit { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--soft); margin: 0 0 8px 4px; }
+  .zona-tit svg { width: 16px; height: 16px; }
+
+  /* Móvil */
+  .movil { background: var(--phone); border-radius: 36px; padding: 12px; box-shadow: var(--shadow); position: sticky; top: 16px; }
+  .pantalla { background: var(--panel); border-radius: 26px; overflow: hidden; }
+  .barra-app { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+  .barra-app small { color: var(--faint); font-size: 12px; }
+  .barra-app h3 { font-size: 18px; }
+  form { padding: 16px 18px 20px; display: flex; flex-direction: column; gap: 16px; }
+  .campo { display: flex; flex-direction: column; gap: 6px; }
+  .campo > label, .campo > .etq { font-size: 14px; font-weight: 600; }
+  .ayuda { font-size: 13px; color: var(--soft); }
+  .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  input[type="text"], input[type="number"], input[type="date"], select, textarea {
+    width: 100%; min-height: 46px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--panel); font-size: 16px;
+  }
+  textarea { min-height: 64px; resize: vertical; }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+  .segmentos { display: flex; flex-wrap: wrap; gap: 6px; }
+  .segmentos label { flex: 1 1 auto; }
+  .segmentos input { position: absolute; opacity: 0; pointer-events: none; }
+  .segmentos span { display: block; text-align: center; padding: 10px 12px; min-height: 44px; border-radius: 10px; border: 1px solid var(--line-strong); font-size: 15px; cursor: pointer; white-space: nowrap; }
+  .segmentos input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .segmentos input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .paradas { display: flex; flex-direction: column; gap: 8px; }
+  .parada { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; }
+  .parada > span { font-size: 15px; }
+  .contador { display: flex; align-items: center; border: 1px solid var(--line-strong); border-radius: 10px; overflow: hidden; }
+  .contador button { width: 44px; height: 44px; border: 0; background: var(--cell-head); font-size: 20px; cursor: pointer; }
+  .contador input { width: 64px; min-height: 44px; border: 0; border-radius: 0; text-align: center; padding: 0; -moz-appearance: textfield; }
+  .contador input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .vivo { border-radius: 12px; padding: 12px 14px; background: var(--cell-head); }
+  .vivo .cifra { font-size: 28px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .vivo .medidor { height: 8px; border-radius: 99px; background: var(--line); margin: 8px 0 6px; overflow: hidden; position: relative; }
+  .vivo .medidor i { display: block; height: 100%; border-radius: 99px; background: var(--good); transition: width .2s; }
+  .vivo .medidor::after { content: ""; position: absolute; left: 80%; top: -2px; bottom: -2px; width: 2px; background: var(--ink); opacity: .35; }
+  .vivo.mal .cifra { color: var(--bad); }
+  .vivo.mal .medidor i { background: var(--bad); }
+  .vivo.bien .cifra { color: var(--good); }
+  .vivo p { font-size: 13px; color: var(--soft); }
+  .vivo.aviso { background: var(--warn-soft); }
+  .enviar { min-height: 52px; border: 0; border-radius: 12px; background: var(--accent); color: var(--accent-ink); font-size: 17px; font-weight: 700; cursor: pointer; }
+  .enviar[disabled] { opacity: .65; cursor: progress; }
+  .error { padding: 10px 12px; border-radius: 10px; background: var(--bad-soft); color: var(--bad); font-size: 14px; }
+
+  /* Oficina */
+  .oficina { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+  .ventana { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; min-width: 0; }
+  .ventana-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .ventana-bar .puntos { display: flex; gap: 6px; }
+  .ventana-bar .puntos i { width: 10px; height: 10px; border-radius: 50%; background: var(--line-strong); }
+  .ventana-bar .tit { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ventana-bar .sub { color: var(--faint); font-size: 13px; }
+  .vacio { padding: 36px 20px; text-align: center; color: var(--soft); }
+  .vacio svg { width: 40px; height: 40px; color: var(--line-strong); margin-bottom: 8px; }
+  .vacio b { display: block; color: var(--ink); margin-bottom: 4px; }
+
+  .mensaje { animation: entra .35s ease-out; }
+  @keyframes entra { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .mensaje-cab { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; padding: 14px 16px 10px; align-items: start; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 15px; background: var(--accent-soft); color: var(--accent); }
+  .mensaje-cab .quien { font-size: 14px; }
+  .mensaje-cab .quien b { font-size: 15px; }
+  .mensaje-cab .para { color: var(--soft); font-size: 13px; }
+  .mensaje-cab time { color: var(--faint); font-size: 13px; white-space: nowrap; }
+  .asunto { padding: 0 16px 10px 68px; font-size: 17px; font-weight: 700; }
+  .asunto.aviso { color: var(--bad); }
+  .cuerpo { margin: 0 16px 16px 68px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+  .cuerpo iframe { display: block; width: 100%; min-height: 120px; border: 0; background: #fff; }
+  .decidir { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 0 16px 16px 68px; }
+  .btn { min-height: 44px; padding: 0 18px; border-radius: 10px; font-weight: 700; cursor: pointer; border: 1px solid transparent; }
+  .btn.si { background: var(--good); color: #fff; }
+  .btn.no { background: transparent; border-color: var(--line-strong); }
+  .btn[disabled] { opacity: .6; cursor: progress; }
+  .decidir small { color: var(--soft); font-size: 13px; flex-basis: 100%; }
+  .nota-envio { margin: 0 16px 16px 68px; padding: 10px 12px; border-radius: 10px; background: var(--accent-soft); font-size: 14px; }
+
+  .xl-bar { background: var(--xl); color: #fff; border-bottom: 0; }
+  .xl-bar .sub { color: rgba(255,255,255,.8); }
+  .xl-ico { width: 22px; height: 22px; border-radius: 4px; background: #fff; color: var(--xl); display: grid; place-items: center; font-weight: 800; font-size: 13px; }
+  .descargar { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.6); background: transparent; color: #fff; font-weight: 600; font-size: 14px; cursor: pointer; white-space: nowrap; }
+  .descargar svg { width: 16px; height: 16px; }
+  .descargar[disabled] { opacity: .6; }
+  .hoja { overflow-x: auto; }
+  .hoja table { border-collapse: collapse; font-size: 13px; min-width: 100%; }
+  .hoja th, .hoja td { border: 1px solid var(--line); padding: 6px 10px; white-space: nowrap; text-align: left; background: var(--cell); }
+  .hoja thead th { background: var(--cell-head); color: var(--faint); font-weight: 500; text-align: center; font-size: 12px; padding: 3px 10px; }
+  .hoja tbody th { background: var(--cell-head); color: var(--faint); font-weight: 500; text-align: center; width: 36px; font-size: 12px; }
+  .hoja tr.cabecera td { font-weight: 700; background: var(--xl-soft); }
+  .hoja td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .hoja tr.nuevo td { background: var(--new); transition: background 2s; }
+  .hoja td.mal { color: var(--bad); font-weight: 600; }
+  .hoja td.bien { color: var(--good); font-weight: 600; }
+  .hoja td.corta { max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+  .hoja .btn { min-height: 30px; padding: 0 10px; font-size: 13px; margin-left: 4px; }
+  .hoja-pie { padding: 10px 14px; color: var(--soft); font-size: 13px; border-top: 1px solid var(--line); }
+
+  details.como { margin-top: 32px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 0 16px; }
+  details.como summary { cursor: pointer; padding: 14px 0; font-weight: 600; }
+  details.como ul { margin: 0 0 16px; padding-left: 20px; color: var(--soft); font-size: 15px; }
+  details.como li { margin-bottom: 6px; }
+
+  @media (max-width: 900px) {
+    .escena { grid-template-columns: 1fr; }
+    .movil { position: static; background: transparent; padding: 0; box-shadow: none; border-radius: 0; }
+    .pantalla { border-radius: var(--radius); border: 1px solid var(--line); box-shadow: var(--shadow); }
+  }
+  @media (max-width: 640px) {
+    main { padding-top: 20px; }
+    .elige { grid-template-columns: 1fr; }
+    .opcion { padding: 12px; }
+    .pasos li { font-size: 13px; padding-right: 8px; }
+    .asunto { padding: 0 16px 10px; }
+    .cuerpo, .nota-envio { margin: 0 16px 16px; }
+    .decidir { padding: 0 16px 16px; }
+    .mensaje-cab { grid-template-columns: 36px 1fr; }
+    .mensaje-cab time { grid-column: 2; }
+    .avatar { width: 36px; height: 36px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 </style>
 </head>
 <body>
 <main>
-  <header>
-    <h1>Automatización de oficina y planta para pymes</h1>
-    <p class="muted">Dos procesos que en muchas pymes industriales se hacen a mano, automatizados con n8n. Rellena el formulario como lo haría un empleado y mira qué pasa después: el correo que recibiría el responsable y la fila que se añade a la hoja, que puedes descargar en Excel.</p>
-    <p class="aviso-demo"><b>Demo con datos inventados.</b> Lo que envíes solo lo ves tú, en este navegador, y se borra a las 24 horas. No se envía ningún correo: ves exactamente el que se enviaría.</p>
+  <header class="hero">
+    <p class="eyebrow">Demo · Automatización para pymes</p>
+    <h1>Prueba cómo se automatiza un trámite de tu empresa</h1>
+    <p>Rellena el formulario como lo haría un empleado desde el móvil. Al momento verás el correo que recibe su responsable y la fila que queda apuntada en la hoja de Excel.</p>
+    <div class="chips">
+      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>Sin registrarte</span>
+      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>Un minuto</span>
+      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>No se envía ningún correo de verdad</span>
+      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>Lo tuyo solo lo ves tú y se borra en 24 h</span>
+    </div>
   </header>
 
-  <nav class="pestanas" role="tablist" aria-label="Automatizaciones">
-    <button type="button" role="tab" id="tab-turnos" aria-controls="panel-turnos" data-p="turnos">Planta · Informe de turno</button>
-    <button type="button" role="tab" id="tab-ausencias" aria-controls="panel-ausencias" data-p="ausencias">RRHH · Vacaciones y ausencias</button>
-  </nav>
+  <div class="elige" role="tablist" aria-label="Elige qué quieres probar">
+    <button type="button" class="opcion" role="tab" id="tab-turnos" aria-controls="escena-turnos" data-e="turnos">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21V10l6 4V10l6 4V6l6-3v18z"/><path d="M3 21h18"/></svg></span>
+      <span><b>Parte de fin de turno</b><span>El operario cuenta cómo ha ido el turno. El jefe recibe el resumen, y un aviso si la producción se queda corta.</span></span>
+    </button>
+    <button type="button" class="opcion" role="tab" id="tab-ausencias" aria-controls="escena-ausencias" data-e="ausencias">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M9 15l2 2 4-4"/></svg></span>
+      <span><b>Vacaciones y permisos</b><span>Un empleado pide días. La responsable los aprueba con un clic y todo queda apuntado.</span></span>
+    </button>
+  </div>
 
-  <!-- Planta: informe de turno -->
-  <section id="panel-turnos" role="tabpanel" aria-labelledby="tab-turnos" hidden>
-    <p class="que muted">Al acabar el turno, el operario rellena el formulario en el móvil. El flujo calcula la eficiencia y las paradas, guarda la fila y manda el resumen al jefe de turno; si la eficiencia baja del 80 %, el asunto lleva un aviso con el motivo principal de parada.</p>
-    <div class="rejilla">
-      <div class="card">
-        <h2><span class="paso">1</span>Formulario del operario</h2>
+  <ol class="pasos" id="pasos" aria-label="Progreso">
+    <li class="ahora">Rellena el formulario</li>
+    <li>Llega el correo</li>
+    <li>Queda apuntado en la hoja</li>
+  </ol>
+
+  <!-- ============ Parte de fin de turno ============ -->
+  <section class="escena" id="escena-turnos" role="tabpanel" aria-labelledby="tab-turnos" hidden>
+    <div>
+      <p class="zona-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>En el móvil del operario</p>
+      <div class="movil"><div class="pantalla">
+        <div class="barra-app"><small>Formulario</small><h3>Parte de fin de turno</h3></div>
         <form id="form-turnos" novalidate>
-          <label>Fecha<input type="date" name="fecha" required></label>
-          <label>Turno<select name="turno"><option>Mañana</option><option>Tarde</option><option>Noche</option></select></label>
-          <label>Línea<select name="linea"><option>Perfiladora 1</option><option>Perfiladora 2</option><option>Cizalla</option></select></label>
-          <label>Operario<input name="operario" maxlength="40" value="Tu nombre" required></label>
-          <label>Metros producidos<input type="number" name="metros" min="0" step="1" value="3700" required></label>
-          <label>Objetivo del turno (m)<input type="number" name="objetivo" min="1" step="1" value="5000" required></label>
-          <label>Parada: avería (min)<input type="number" name="parada_averia" min="0" value="45"></label>
-          <label>Parada: cambio de formato (min)<input type="number" name="parada_cambio_formato" min="0" value="20"></label>
-          <label>Parada: falta de material (min)<input type="number" name="parada_falta_material" min="0" value="0"></label>
-          <label>Parada: otros (min)<input type="number" name="parada_otros" min="0" value="0"></label>
-          <label class="ancho">Observaciones<textarea name="observaciones" maxlength="200" rows="2">Rodillo 3 con holgura, avisado a mantenimiento.</textarea></label>
-          <div class="ancho"><button class="boton" type="submit">Enviar informe</button></div>
+          <div class="campo">
+            <span class="etq" id="et-turno">Turno</span>
+            <div class="segmentos" role="radiogroup" aria-labelledby="et-turno">
+              <label><input type="radio" name="turno" value="Mañana" checked><span>Mañana</span></label>
+              <label><input type="radio" name="turno" value="Tarde"><span>Tarde</span></label>
+              <label><input type="radio" name="turno" value="Noche"><span>Noche</span></label>
+            </div>
+          </div>
+          <div class="campo">
+            <span class="etq" id="et-linea">Línea</span>
+            <div class="segmentos" role="radiogroup" aria-labelledby="et-linea">
+              <label><input type="radio" name="linea" value="Perfiladora 1" checked><span>Perfiladora 1</span></label>
+              <label><input type="radio" name="linea" value="Perfiladora 2"><span>Perfiladora 2</span></label>
+              <label><input type="radio" name="linea" value="Cizalla"><span>Cizalla</span></label>
+            </div>
+          </div>
+          <div class="dos">
+            <div class="campo"><label for="t-fecha">Fecha</label><input type="date" id="t-fecha" name="fecha" required></div>
+            <div class="campo"><label for="t-operario">Tu nombre</label><input type="text" id="t-operario" name="operario" maxlength="40" value="Ana Pérez" autocomplete="off" required></div>
+          </div>
+          <div class="dos">
+            <div class="campo"><label for="t-metros">Metros hechos</label><input type="number" id="t-metros" name="metros" inputmode="numeric" min="0" step="1" value="3700" required></div>
+            <div class="campo"><label for="t-objetivo">Objetivo</label><input type="number" id="t-objetivo" name="objetivo" inputmode="numeric" min="1" step="1" value="5000" required></div>
+          </div>
+          <div class="vivo" id="vivo-turnos" aria-live="polite"></div>
+          <div class="campo">
+            <span class="etq">Minutos de parada</span>
+            <div class="paradas">
+              <div class="parada"><span>Avería</span><div class="contador"><button type="button" data-paso="-5" aria-label="Quitar 5 minutos de avería">−</button><input type="number" name="parada_averia" inputmode="numeric" min="0" max="480" value="45" aria-label="Minutos de avería"><button type="button" data-paso="5" aria-label="Añadir 5 minutos de avería">+</button></div></div>
+              <div class="parada"><span>Cambio de formato</span><div class="contador"><button type="button" data-paso="-5" aria-label="Quitar 5 minutos de cambio de formato">−</button><input type="number" name="parada_cambio_formato" inputmode="numeric" min="0" max="480" value="20" aria-label="Minutos de cambio de formato"><button type="button" data-paso="5" aria-label="Añadir 5 minutos de cambio de formato">+</button></div></div>
+              <div class="parada"><span>Falta de material</span><div class="contador"><button type="button" data-paso="-5" aria-label="Quitar 5 minutos de falta de material">−</button><input type="number" name="parada_falta_material" inputmode="numeric" min="0" max="480" value="0" aria-label="Minutos de falta de material"><button type="button" data-paso="5" aria-label="Añadir 5 minutos de falta de material">+</button></div></div>
+              <div class="parada"><span>Otros</span><div class="contador"><button type="button" data-paso="-5" aria-label="Quitar 5 minutos de otros">−</button><input type="number" name="parada_otros" inputmode="numeric" min="0" max="480" value="0" aria-label="Minutos de otras paradas"><button type="button" data-paso="5" aria-label="Añadir 5 minutos de otros">+</button></div></div>
+            </div>
+          </div>
+          <div class="campo"><label for="t-obs">Observaciones <span class="ayuda">(opcional)</span></label><textarea id="t-obs" name="observaciones" maxlength="200" rows="2">Rodillo 3 con holgura, avisado a mantenimiento.</textarea></div>
+          <div class="error" role="alert" hidden></div>
+          <button class="enviar" type="submit">Enviar parte</button>
         </form>
-        <div class="error" role="alert" hidden></div>
-      </div>
-      <div class="card">
-        <h2><span class="paso">2</span>Correo que se enviaría</h2>
-        <div class="correo-zona" aria-live="polite"><p class="vacio">Envía el formulario y aquí verás el correo que recibiría el jefe de turno.</p></div>
-      </div>
+      </div></div>
     </div>
-    <div class="card">
-      <div class="hoja-cab">
-        <h2><span class="paso">3</span>Tu hoja de informes de turno</h2>
-        <button type="button" class="boton sec descargar" data-hoja="turnos">Descargar Excel (.xlsx)</button>
+
+    <div class="oficina">
+      <div>
+        <p class="zona-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>En el correo del jefe de turno</p>
+        <div class="ventana">
+          <div class="ventana-bar"><span class="puntos" aria-hidden="true"><i></i><i></i><i></i></span><span class="tit">Bandeja de entrada</span><span class="sub">jefe de turno</span></div>
+          <div class="buzon" aria-live="polite">
+            <div class="vacio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><b>Todavía no ha llegado nada</b>Envía el parte y el resumen aparecerá aquí al momento.</div>
+          </div>
+        </div>
       </div>
-      <div class="hoja"><table><thead></thead><tbody></tbody></table></div>
-      <p class="muted pequeno" style="margin-top:8px">En una empresa, esta hoja sería un Excel o una hoja de Google compartida con el responsable. El Excel lo genera el propio flujo de n8n.</p>
+      <div>
+        <p class="zona-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>En la hoja de la oficina</p>
+        <div class="ventana">
+          <div class="ventana-bar xl-bar"><span class="xl-ico" aria-hidden="true">X</span><span class="tit">partes-de-turno.xlsx</span><button type="button" class="descargar" data-hoja="turnos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>Descargar</button></div>
+          <div class="hoja"><table><thead></thead><tbody></tbody></table></div>
+          <p class="hoja-pie">Cada parte añade una fila. El Excel lo genera el propio sistema; ábrelo con Excel, LibreOffice o Google Sheets.</p>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- RRHH: ausencias -->
-  <section id="panel-ausencias" role="tabpanel" aria-labelledby="tab-ausencias" hidden>
-    <p class="que muted">El empleado pide vacaciones o un permiso. El flujo cuenta los días laborables (sin fines de semana ni festivos), comprueba el saldo de 22 días y los solapes, avisa si coincide con alguien de su departamento y manda la solicitud a la responsable con dos botones. Al decidir, el empleado recibe la respuesta y la hoja se actualiza.</p>
-    <div class="rejilla">
-      <div class="card">
-        <h2><span class="paso">1</span>Solicitud del empleado</h2>
+  <!-- ============ Vacaciones y permisos ============ -->
+  <section class="escena" id="escena-ausencias" role="tabpanel" aria-labelledby="tab-ausencias" hidden>
+    <div>
+      <p class="zona-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>En el móvil del empleado</p>
+      <div class="movil"><div class="pantalla">
+        <div class="barra-app"><small>Formulario</small><h3>Pedir días</h3></div>
         <form id="form-ausencias" novalidate>
-          <label>Empleado<select name="empleado"><option>Marta Soler</option><option>Laura Gómez</option><option>Nuria Ferrer</option><option>Hugo Ortiz</option><option>Pablo Cano</option></select></label>
-          <label>Tipo<select name="tipo"><option>Vacaciones</option><option>Asuntos propios</option><option>Permiso retribuido</option></select></label>
-          <label>Desde<input type="date" name="desde" required></label>
-          <label>Hasta (incluido)<input type="date" name="hasta" required></label>
-          <label class="ancho">Comentario<textarea name="comentario" maxlength="200" rows="2">Viaje familiar.</textarea></label>
-          <div class="ancho"><button class="boton" type="submit">Enviar solicitud</button></div>
+          <div class="campo">
+            <label for="a-empleado">¿Quién eres?</label>
+            <select id="a-empleado" name="empleado">
+              <option value="Marta Soler">Marta Soler · Producción</option>
+              <option value="Laura Gómez">Laura Gómez · Producción</option>
+              <option value="Nuria Ferrer">Nuria Ferrer · Administración</option>
+              <option value="Hugo Ortiz">Hugo Ortiz · Comercial</option>
+              <option value="Pablo Cano">Pablo Cano · Calidad</option>
+            </select>
+          </div>
+          <div class="campo">
+            <span class="etq" id="et-tipo">¿Qué pides?</span>
+            <div class="segmentos" role="radiogroup" aria-labelledby="et-tipo">
+              <label><input type="radio" name="tipo" value="Vacaciones" checked><span>Vacaciones</span></label>
+              <label><input type="radio" name="tipo" value="Asuntos propios"><span>Asuntos propios</span></label>
+              <label><input type="radio" name="tipo" value="Permiso retribuido"><span>Permiso</span></label>
+            </div>
+          </div>
+          <div class="dos">
+            <div class="campo"><label for="a-desde">Desde</label><input type="date" id="a-desde" name="desde" required></div>
+            <div class="campo"><label for="a-hasta">Hasta (incluido)</label><input type="date" id="a-hasta" name="hasta" required></div>
+          </div>
+          <div class="vivo" id="vivo-ausencias" aria-live="polite"></div>
+          <div class="campo"><label for="a-com">Comentario <span class="ayuda">(opcional)</span></label><textarea id="a-com" name="comentario" maxlength="200" rows="2">Viaje familiar.</textarea></div>
+          <div class="error" role="alert" hidden></div>
+          <button class="enviar" type="submit">Pedir días</button>
         </form>
-        <div class="error" role="alert" hidden></div>
-        <p class="muted pequeno" style="margin-top:10px" id="companeros"></p>
-      </div>
-      <div class="card">
-        <h2><span class="paso">2</span>Correo que se enviaría</h2>
-        <div class="correo-zona" aria-live="polite"><p class="vacio">Envía la solicitud y aquí verás el correo de la responsable, con los botones para aprobar o rechazar.</p></div>
-      </div>
+      </div></div>
     </div>
-    <div class="card">
-      <div class="hoja-cab">
-        <h2><span class="paso">3</span>Tu hoja de ausencias</h2>
-        <button type="button" class="boton sec descargar" data-hoja="ausencias">Descargar Excel (.xlsx)</button>
+
+    <div class="oficina">
+      <div>
+        <p class="zona-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span id="buzon-de">En el correo de la responsable de RRHH</span></p>
+        <div class="ventana">
+          <div class="ventana-bar"><span class="puntos" aria-hidden="true"><i></i><i></i><i></i></span><span class="tit">Bandeja de entrada</span><span class="sub" id="buzon-sub">responsable de RRHH</span></div>
+          <div class="buzon" aria-live="polite">
+            <div class="vacio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><b>Todavía no ha llegado nada</b>Pide unos días y aquí verás la solicitud, con los botones para aprobarla o rechazarla.</div>
+          </div>
+        </div>
       </div>
-      <div class="hoja"><table><thead></thead><tbody></tbody></table></div>
-      <p class="muted pequeno" style="margin-top:8px">Las solicitudes pendientes también se pueden decidir desde aquí. En la empresa, la responsable lo hace desde el propio correo.</p>
+      <div>
+        <p class="zona-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>En la hoja de la oficina</p>
+        <div class="ventana">
+          <div class="ventana-bar xl-bar"><span class="xl-ico" aria-hidden="true">X</span><span class="tit">vacaciones-y-permisos.xlsx</span><button type="button" class="descargar" data-hoja="ausencias"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>Descargar</button></div>
+          <div class="hoja"><table><thead></thead><tbody></tbody></table></div>
+          <p class="hoja-pie">Las solicitudes pendientes también se pueden decidir desde aquí.</p>
+        </div>
+      </div>
     </div>
   </section>
 
-  <p class="pie">Construido con n8n autoalojado en un VPS. La página habla con los flujos "Demo pública · API", "Demo pública · RRHH" y "Demo pública · Excel", que usan los mismos cálculos y plantillas de correo que los flujos reales. Tu espacio es privado porque nadie puede adivinar el identificador aleatorio que guarda tu navegador; no hay cuentas ni inicio de sesión.</p>
+  <details class="como">
+    <summary>Cómo está hecho y qué pasa con tus datos</summary>
+    <ul>
+      <li>Funciona con n8n, una herramienta de automatización instalada en un servidor propio. Esta demo usa los mismos cálculos y las mismas plantillas de correo que la versión que enviaría correos de verdad.</li>
+      <li>En una empresa, el formulario se abre desde el móvil con un enlace o un código QR, los correos llegan a las personas reales y la hoja puede ser un Excel o una hoja de Google compartida.</li>
+      <li>Aquí no hay cuentas: tu navegador guarda un identificador aleatorio y solo ves tus filas. Todo se borra a las 24 horas. Los nombres y las cifras son inventados.</li>
+      <li>En vacaciones se cuentan solo los días laborables (sin fines de semana ni festivos nacionales), con un saldo de 22 días al año, y se avisa si coincides con alguien de tu departamento. Iván Ruiz, Carmen Vidal y Sergio Mata son compañeros inventados que ya tienen días pedidos.</li>
+    </ul>
+  </details>
 </main>
 
 <script>
@@ -169,6 +376,7 @@ const ESC = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const pct = (n) => (Math.round(n * 10) / 10).toLocaleString('es-ES') + ' %';
 const leer = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function sesion() {
   let sid = leer('informe-demo-sid');
@@ -183,189 +391,282 @@ function sesion() {
 const SID = sesion();
 
 async function pedir(ruta, cuerpo) {
-  const r = await fetch(API + ruta, cuerpo
-    ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...cuerpo, sid: SID }) }
-    : { cache: 'no-store' });
+  let r;
+  try {
+    r = await fetch(API + ruta, cuerpo
+      ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...cuerpo, sid: SID }) }
+      : { cache: 'no-store' });
+  } catch (e) { throw new Error('No hay conexión con la demo. Revisa tu conexión e inténtalo de nuevo.'); }
   const j = await r.json().catch(() => ({}));
-  if (!r.ok || j.ok === false) throw new Error(j.error || 'La demo no responde. Inténtalo de nuevo.');
+  if (!r.ok || j.ok === false) throw new Error(j.error || 'La demo no responde ahora mismo. Inténtalo de nuevo en un momento.');
   return j;
 }
 
-// ---- Pestañas ----
-const pestanas = document.querySelectorAll('[role="tab"]');
-function abrir(p) {
-  pestanas.forEach((t) => {
-    const si = t.dataset.p === p;
-    t.setAttribute('aria-selected', String(si));
-    document.getElementById(t.getAttribute('aria-controls')).hidden = !si;
+// ---------- Escenas y pasos ----------
+const progreso = { turnos: 0, ausencias: 0 };
+let escena = leer('informe-demo-pestana') === 'ausencias' ? 'ausencias' : 'turnos';
+function pintarPasos() {
+  const n = progreso[escena];
+  document.querySelectorAll('#pasos li').forEach((li, i) => {
+    li.className = i < n ? 'hecho' : i === n ? 'ahora' : '';
   });
-  guardar('informe-demo-pestana', p);
 }
-pestanas.forEach((t) => t.addEventListener('click', () => abrir(t.dataset.p)));
-abrir(leer('informe-demo-pestana') === 'ausencias' ? 'ausencias' : 'turnos');
+function abrir(e) {
+  escena = e;
+  document.querySelectorAll('.opcion').forEach((b) => {
+    const si = b.dataset.e === e;
+    b.setAttribute('aria-selected', String(si));
+    b.tabIndex = si ? 0 : -1;
+    document.getElementById(b.getAttribute('aria-controls')).hidden = !si;
+  });
+  guardar('informe-demo-pestana', e);
+  pintarPasos();
+}
+document.querySelectorAll('.opcion').forEach((b) => {
+  b.addEventListener('click', () => abrir(b.dataset.e));
+  b.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'ArrowRight' && ev.key !== 'ArrowLeft' && ev.key !== 'ArrowDown' && ev.key !== 'ArrowUp') return;
+    ev.preventDefault();
+    const otro = escena === 'turnos' ? 'ausencias' : 'turnos';
+    abrir(otro);
+    document.querySelector(`.opcion[data-e="${otro}"]`).focus();
+  });
+});
+abrir(escena);
 
-// ---- Hoja y correo ----
+// ---------- Piezas comunes ----------
 const LETRAS = 'ABCDEFGHIJKLMNOP';
-function pintarHoja(panel, columnas, filas, nuevo) {
-  const tabla = panel.querySelector('.hoja table');
+function pintarHoja(sec, columnas, filas, nuevo) {
+  const tabla = sec.querySelector('.hoja table');
   tabla.querySelector('thead').innerHTML = '<tr><th></th>' + columnas.map((_, i) => `<th>${LETRAS[i]}</th>`).join('') + '</tr>';
-  const titulos = '<tr class="titulos"><th>1</th>' + columnas.map((c) => `<td>${ESC(c.t)}</td>`).join('') + '</tr>';
-  const cuerpo = filas.map((f, i) => `<tr class="${nuevo !== undefined && nuevo === f.__clave ? 'nuevo' : ''}"><th>${i + 2}</th>` +
+  const cab = '<tr class="cabecera"><th>1</th>' + columnas.map((c) => `<td>${ESC(c.t)}</td>`).join('') + '</tr>';
+  const cuerpo = filas.map((f, i) => `<tr class="${nuevo !== undefined && f.__clave === nuevo ? 'nuevo' : ''}"><th>${i + 2}</th>` +
     columnas.map((c) => c.html(f)).join('') + '</tr>').join('');
   const vacias = Array.from({ length: Math.max(0, 3 - filas.length) }, (_, i) =>
     `<tr><th>${filas.length + i + 2}</th>` + columnas.map(() => '<td>&nbsp;</td>').join('') + '</tr>').join('');
-  tabla.querySelector('tbody').innerHTML = titulos + cuerpo + vacias;
+  tabla.querySelector('tbody').innerHTML = cab + cuerpo + vacias;
+  const fila = tabla.querySelector('tr.nuevo');
+  if (fila) setTimeout(() => fila.classList.remove('nuevo'), 2500);
+  sec.querySelector('.descargar').disabled = !filas.length;
 }
 const celda = (v, clase = '') => `<td class="${clase}">${ESC(v)}</td>`;
+const iniciales = (s) => String(s).split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
 
-function pintarCorreo(panel, correo, acciones = '') {
-  const zona = panel.querySelector('.correo-zona');
-  zona.innerHTML = `<div class="correo">
-    <div class="cab"><div><b>De</b>${ESC(correo.de)}</div><div><b>Para</b>${ESC(correo.para)}</div><div><b>Asunto</b><strong>${ESC(correo.asunto)}</strong></div></div>
-    <iframe sandbox="allow-same-origin" title="Vista previa del correo"></iframe>
-    ${acciones ? `<div class="acciones">${acciones}</div>` : ''}
-  </div>`;
-  const marco = zona.querySelector('iframe');
+function pintarCorreo(sec, correo, extra = '') {
+  const buzon = sec.querySelector('.buzon');
+  const aviso = /^⚠/.test(correo.asunto);
+  const hora = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  buzon.innerHTML = `<article class="mensaje">
+    <div class="mensaje-cab">
+      <span class="avatar" aria-hidden="true">${ESC(iniciales(correo.de))}</span>
+      <div><div class="quien"><b>${ESC(correo.de)}</b></div><div class="para">para ${ESC(correo.para)}</div></div>
+      <time>${hora}</time>
+    </div>
+    <h3 class="asunto ${aviso ? 'aviso' : ''}">${ESC(correo.asunto)}</h3>
+    <div class="cuerpo"><iframe sandbox="allow-same-origin" title="Contenido del correo"></iframe></div>
+    ${extra}
+  </article>`;
+  const marco = buzon.querySelector('iframe');
   marco.addEventListener('load', () => {
-    try { marco.style.height = (marco.contentDocument.documentElement.scrollHeight + 8) + 'px'; } catch (e) {}
+    try { marco.style.height = (marco.contentDocument.documentElement.scrollHeight + 4) + 'px'; } catch (e) {}
   });
-  marco.srcdoc = `<!doctype html><meta charset="utf-8"><body style="margin:12px">${correo.html}</body>`;
+  marco.srcdoc = `<!doctype html><meta charset="utf-8"><body style="margin:14px;font-family:Arial,sans-serif">${correo.html}</body>`;
+  if (innerWidth < 900) buzon.closest('.ventana').scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: 'start' });
 }
 
-function mostrarError(panel, msg) {
-  const e = panel.querySelector('.error');
+function mostrarError(sec, msg) {
+  const e = sec.querySelector('.error');
   e.textContent = msg || '';
   e.hidden = !msg;
 }
 
 async function enviar(form, accion) {
-  const panel = form.closest('[role="tabpanel"]');
-  const btn = form.querySelector('button[type="submit"]');
-  mostrarError(panel, '');
-  btn.disabled = true;
+  const sec = form.closest('.escena');
+  const btn = form.querySelector('.enviar');
+  const texto = btn.textContent;
+  mostrarError(sec, '');
+  btn.disabled = true; btn.textContent = 'Enviando…';
   try { await accion(Object.fromEntries(new FormData(form).entries())); }
-  catch (err) { mostrarError(panel, err.message); }
-  finally { btn.disabled = false; }
+  catch (err) { mostrarError(sec, err.message); }
+  finally { btn.disabled = false; btn.textContent = texto; }
 }
 
 document.querySelectorAll('.descargar').forEach((b) => b.addEventListener('click', async () => {
-  const panel = b.closest('[role="tabpanel"]');
-  mostrarError(panel, '');
+  const sec = b.closest('.escena');
+  mostrarError(sec, '');
   b.disabled = true;
   try {
     const r = await fetch(`${API}/excel?sid=${SID}&hoja=${b.dataset.hoja}`, { cache: 'no-store' });
     if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || 'No se pudo generar el Excel.'); }
     const url = URL.createObjectURL(await r.blob());
     const a = document.createElement('a');
-    a.href = url; a.download = `${b.dataset.hoja}-demo.xlsx`;
+    a.href = url; a.download = b.closest('.ventana-bar').querySelector('.tit').textContent;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
-  } catch (err) { mostrarError(panel, err.message); }
+  } catch (err) { mostrarError(sec, err.message); }
   finally { b.disabled = false; }
 }));
 
-// ---- Planta: informe de turno ----
-const pTurnos = document.getElementById('panel-turnos');
-const COL_TURNOS = [
+document.querySelectorAll('.contador button').forEach((b) => b.addEventListener('click', () => {
+  const i = b.parentElement.querySelector('input');
+  i.value = Math.min(480, Math.max(0, (Number(i.value) || 0) + Number(b.dataset.paso)));
+  i.dispatchEvent(new Event('input', { bubbles: true }));
+}));
+
+// ---------- Parte de fin de turno ----------
+const sT = document.getElementById('escena-turnos');
+const fT = document.getElementById('form-turnos');
+const COL_T = [
   { t: 'Fecha', html: (f) => celda(f.fecha) },
   { t: 'Turno', html: (f) => celda(f.turno) },
   { t: 'Línea', html: (f) => celda(f.linea) },
   { t: 'Operario', html: (f) => celda(f.operario) },
   { t: 'Metros', html: (f) => celda(NF.format(f.metros), 'num') },
   { t: 'Objetivo', html: (f) => celda(NF.format(f.objetivo), 'num') },
-  { t: 'Eficiencia', html: (f) => celda(pct(f.eficiencia), 'num ' + (f.aviso ? 'mal' : 'ok')) },
+  { t: 'Eficiencia', html: (f) => celda(pct(f.eficiencia), 'num ' + (f.aviso ? 'mal' : 'bien')) },
   { t: 'Paradas (min)', html: (f) => celda(f.paradas_total, 'num') },
   { t: 'Motivo principal', html: (f) => celda(f.motivo_principal) },
-  { t: 'Aviso', html: (f) => celda(f.aviso ? 'Sí' : 'No', f.aviso ? 'mal' : '') },
-  { t: 'Observaciones', html: (f) => `<td class="nota" title="${ESC(f.observaciones)}">${ESC(f.observaciones)}</td>` },
+  { t: 'Observaciones', html: (f) => `<td class="corta" title="${ESC(f.observaciones)}">${ESC(f.observaciones)}</td>` },
 ];
-let filasTurnos = [];
 async function cargarTurnos(nuevo) {
-  filasTurnos = (await pedir(`/informes?sid=${SID}`)).filas || [];
-  filasTurnos.forEach((f) => { f.__clave = f.registrado_en; });
-  pintarHoja(pTurnos, COL_TURNOS, filasTurnos, nuevo);
+  const filas = (await pedir(`/informes?sid=${SID}`)).filas || [];
+  filas.forEach((f) => { f.__clave = f.registrado_en; });
+  if (filas.length && !progreso.turnos) progreso.turnos = 3;
+  pintarHoja(sT, COL_T, filas, nuevo);
+  if (escena === 'turnos') pintarPasos();
 }
-const fT = document.getElementById('form-turnos');
+
 fT.fecha.value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 const OBJETIVO = { 'Perfiladora 1': 5000, 'Perfiladora 2': 4000, 'Cizalla': 4000 };
-fT.linea.addEventListener('change', () => { fT.objetivo.value = OBJETIVO[fT.linea.value]; });
+const MOTIVOS = { parada_averia: 'avería', parada_cambio_formato: 'cambio de formato', parada_falta_material: 'falta de material', parada_otros: 'otros' };
+function vivoTurnos() {
+  const m = Number(fT.metros.value) || 0;
+  const o = Number(fT.objetivo.value) || 0;
+  const v = document.getElementById('vivo-turnos');
+  if (!o) { v.className = 'vivo'; v.innerHTML = '<p>Indica el objetivo del turno para calcular la eficiencia.</p>'; return; }
+  const e = Math.round((m / o) * 1000) / 10;
+  const paradas = Object.keys(MOTIVOS).map((k) => [k, Number(fT[k].value) || 0]);
+  const total = paradas.reduce((a, [, x]) => a + x, 0);
+  const [mk, mm] = paradas.sort((a, b) => b[1] - a[1])[0];
+  v.className = 'vivo ' + (e < 80 ? 'mal aviso' : 'bien');
+  v.innerHTML = `<div class="cifra">${pct(e)}</div>
+    <div class="medidor" aria-hidden="true"><i style="width:${Math.min(100, e)}%"></i></div>
+    <p>${e < 80 ? `Por debajo del 80 %: el jefe recibirá un <b>aviso</b>${mm ? ` con la ${MOTIVOS[mk]} como motivo principal` : ''}.` : 'Por encima del 80 %: el jefe recibirá el resumen normal.'} ${total} min de parada.</p>`;
+}
+fT.addEventListener('input', vivoTurnos);
+fT.addEventListener('change', (e) => {
+  if (e.target.name === 'linea') { fT.objetivo.value = OBJETIVO[e.target.value]; vivoTurnos(); }
+});
+vivoTurnos();
+
 fT.addEventListener('submit', (e) => {
   e.preventDefault();
   enviar(fT, async (datos) => {
     const j = await pedir('/informe', datos);
-    pintarCorreo(pTurnos, j.correo);
+    progreso.turnos = 3;
+    pintarCorreo(sT, j.correo);
     await cargarTurnos(j.informe.registrado_en);
   });
 });
 
-// ---- RRHH: ausencias ----
-const pAus = document.getElementById('panel-ausencias');
-const botonesDecision = (id, mini) =>
-  `<button type="button" class="boton ${mini ? 'mini' : ''}" data-decidir="aprobar" data-id="${id}">Aprobar</button>` +
-  `<button type="button" class="boton sec ${mini ? 'mini' : ''}" data-decidir="rechazar" data-id="${id}">Rechazar</button>`;
-const COL_AUS = [
-  { t: 'Solicitada', html: (f) => celda(f.fecha_solicitud) },
+// ---------- Vacaciones y permisos ----------
+const sA = document.getElementById('escena-ausencias');
+const fA = document.getElementById('form-ausencias');
+const DEPTO = { 'Marta Soler': 'Producción', 'Laura Gómez': 'Producción', 'Nuria Ferrer': 'Administración', 'Hugo Ortiz': 'Comercial', 'Pablo Cano': 'Calidad' };
+const FESTIVOS = ['01-01', '01-06', '05-01', '08-15', '10-12', '11-01', '12-06', '12-08', '12-25'];
+const VIERNES_SANTO = ['2026-04-03', '2027-03-26'];
+const DIA = 864e5;
+const isoDia = (d) => d.toISOString().slice(0, 10);
+const aDia = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(s || '') ? new Date(s + 'T00:00:00Z') : null);
+const laborable = (d) => { const w = d.getUTCDay(); const s = isoDia(d); return w && w !== 6 && !FESTIVOS.includes(s.slice(5)) && !VIERNES_SANTO.includes(s); };
+const contar = (a, z) => { let n = 0; for (let d = new Date(a); d <= z; d = new Date(d.getTime() + DIA)) if (laborable(d)) n++; return n; };
+const corta = (s) => new Date(s + 'T00:00:00Z').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+
+// Mismas fechas que los compañeros inventados del flujo: la semana que viene no, la siguiente.
+const hoyUTC = (() => { const d = new Date(); return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); })();
+const base = new Date(hoyUTC.getTime() + ((((8 - hoyUTC.getUTCDay()) % 7) || 7) + 7) * DIA);
+const mas = (n) => isoDia(new Date(base.getTime() + n * DIA));
+const COMPANEROS = [
+  { empleado: 'Iván Ruiz', departamento: 'Producción', tipo: 'vacaciones', desde: mas(0), hasta: mas(4) },
+  { empleado: 'Carmen Vidal', departamento: 'Administración', tipo: 'asuntos propios', desde: mas(3), hasta: mas(3) },
+  { empleado: 'Sergio Mata', departamento: 'Logística', tipo: 'vacaciones', desde: mas(7), hasta: mas(11) },
+];
+fA.desde.value = mas(2); fA.hasta.value = mas(4);
+let filasA = [];
+
+function vivoAusencias() {
+  const v = document.getElementById('vivo-ausencias');
+  const a = aDia(fA.desde.value), z = aDia(fA.hasta.value);
+  if (!a || !z) { v.className = 'vivo'; v.innerHTML = '<p>Elige las dos fechas.</p>'; return; }
+  if (z < a) { v.className = 'vivo mal'; v.innerHTML = '<p>La fecha final es anterior a la inicial.</p>'; return; }
+  const n = contar(a, z);
+  const dep = DEPTO[fA.empleado.value];
+  const otros = COMPANEROS.concat(filasA.filter((f) => f.estado !== 'Rechazada' && f.empleado !== fA.empleado.value))
+    .filter((c) => c.departamento === dep && c.desde <= fA.hasta.value && c.hasta >= fA.desde.value);
+  v.className = 'vivo ' + (otros.length ? 'aviso' : '');
+  v.innerHTML = `<div class="cifra">${n} ${n === 1 ? 'día laborable' : 'días laborables'}</div>
+    <p>${n ? 'Sin contar fines de semana ni festivos.' : 'Esas fechas son fin de semana o festivo.'}
+    ${otros.length ? `<br><b>Coincide con ${otros.map((c) => `${ESC(c.empleado)} (${corta(c.desde)}${c.hasta !== c.desde ? '–' + corta(c.hasta) : ''})`).join(', ')}</b>, de tu departamento. La responsable lo verá en el correo.` : ''}</p>`;
+}
+fA.addEventListener('input', vivoAusencias);
+fA.addEventListener('change', vivoAusencias);
+
+const botones = (id, enHoja) => enHoja
+  ? `<button type="button" class="btn si" data-decidir="aprobar" data-id="${id}">Aprobar</button><button type="button" class="btn no" data-decidir="rechazar" data-id="${id}">Rechazar</button>`
+  : `<div class="decidir"><button type="button" class="btn si" data-decidir="aprobar" data-id="${id}">Aprobar</button><button type="button" class="btn no" data-decidir="rechazar" data-id="${id}">Rechazar</button><small>Pruébalo: eres la responsable. En el correo real estos dos botones van dentro del mensaje.</small></div>`;
+const COL_A = [
   { t: 'Empleado', html: (f) => celda(f.empleado) },
   { t: 'Departamento', html: (f) => celda(f.departamento) },
   { t: 'Tipo', html: (f) => celda(f.tipo) },
   { t: 'Desde', html: (f) => celda(f.desde) },
   { t: 'Hasta', html: (f) => celda(f.hasta) },
   { t: 'Días', html: (f) => celda(f.dias, 'num') },
-  { t: 'Saldo previo', html: (f) => celda(f.saldo_previo, 'num') },
-  { t: 'Estado', html: (f) => f.estado === 'Pendiente'
-    ? `<td>Pendiente ${botonesDecision(f.id, true)}</td>`
-    : celda(f.estado, f.estado === 'Aprobada' ? 'ok' : 'mal') },
-  { t: 'Coincide con', html: (f) => `<td class="nota" title="${ESC(f.conflictos)}">${f.conflictos ? '⚠ ' + ESC(f.conflictos) : ''}</td>` },
-  { t: 'Comentario', html: (f) => `<td class="nota" title="${ESC(f.comentario)}">${ESC(f.comentario)}</td>` },
+  { t: 'Estado', html: (f) => f.estado === 'Pendiente' ? `<td>Pendiente ${botones(f.id, true)}</td>` : celda(f.estado, f.estado === 'Aprobada' ? 'bien' : 'mal') },
+  { t: 'Coincide con', html: (f) => `<td class="corta" title="${ESC(f.conflictos)}">${f.conflictos ? '⚠ ' + ESC(f.conflictos) : ''}</td>` },
+  { t: 'Solicitada', html: (f) => celda(f.fecha_solicitud) },
 ];
 async function cargarAusencias(nuevo) {
-  const filas = (await pedir(`/ausencias?sid=${SID}`)).filas || [];
-  filas.forEach((f) => { f.__clave = f.id; });
-  pintarHoja(pAus, COL_AUS, filas, nuevo);
+  filasA = (await pedir(`/ausencias?sid=${SID}`)).filas || [];
+  filasA.forEach((f) => { f.__clave = f.id; });
+  if (filasA.length && !progreso.ausencias) progreso.ausencias = 3;
+  pintarHoja(sA, COL_A, filasA, nuevo);
+  vivoAusencias();
+  if (escena === 'ausencias') pintarPasos();
 }
-
-// Mismas fechas que los compañeros ficticios del flujo: la semana que viene no, la siguiente.
-const DIA = 864e5;
-const isoDia = (d) => d.toISOString().slice(0, 10);
-const hoyUTC = (() => { const d = new Date(); return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); })();
-const base = new Date(hoyUTC.getTime() + ((((8 - hoyUTC.getUTCDay()) % 7) || 7) + 7) * DIA);
-const mas = (n) => isoDia(new Date(base.getTime() + n * DIA));
-const fechaCorta = (s) => s.slice(8, 10) + '/' + s.slice(5, 7);
-const fA = document.getElementById('form-ausencias');
-fA.desde.value = mas(2); fA.hasta.value = mas(4);
-document.getElementById('companeros').textContent =
-  `Ausencias ya registradas de compañeros ficticios: Iván Ruiz (Producción), vacaciones del ${fechaCorta(mas(0))} al ${fechaCorta(mas(4))}; ` +
-  `Carmen Vidal (Administración), asuntos propios el ${fechaCorta(mas(3))}; Sergio Mata (Logística), vacaciones del ${fechaCorta(mas(7))} al ${fechaCorta(mas(11))}. ` +
-  'Las fechas propuestas coinciden con Iván para que veas el aviso.';
+vivoAusencias();
 
 fA.addEventListener('submit', (e) => {
   e.preventDefault();
   enviar(fA, async (datos) => {
     const j = await pedir('/ausencia', datos);
-    pintarCorreo(pAus, j.correo, botonesDecision(j.solicitud.id, false) +
-      '<span class="muted pequeno">En el correo real, la responsable decide con estos dos botones.</span>');
+    progreso.ausencias = 3;
+    document.getElementById('buzon-de').textContent = 'En el correo de la responsable de RRHH';
+    document.getElementById('buzon-sub').textContent = 'responsable de RRHH';
+    pintarCorreo(sA, j.correo, botones(j.solicitud.id, false));
     await cargarAusencias(j.solicitud.id);
   });
 });
 
-pAus.addEventListener('click', async (e) => {
+sA.addEventListener('click', async (e) => {
   const b = e.target.closest('[data-decidir]');
   if (!b) return;
-  mostrarError(pAus, '');
-  pAus.querySelectorAll('[data-decidir]').forEach((x) => { x.disabled = true; });
+  mostrarError(sA, '');
+  sA.querySelectorAll('[data-decidir]').forEach((x) => { x.disabled = true; });
   try {
     const j = await pedir('/ausencia-decision', { id: Number(b.dataset.id), decision: b.dataset.decidir });
-    pintarCorreo(pAus, j.correo);
+    document.getElementById('buzon-de').textContent = `En el correo de ${j.solicitud.empleado}`;
+    document.getElementById('buzon-sub').textContent = j.solicitud.empleado;
+    pintarCorreo(sA, j.correo, `<p class="nota-envio">La decisión queda apuntada en la hoja y ${ESC(j.solicitud.empleado.split(' ')[0])} recibe este correo al momento.</p>`);
     await cargarAusencias(j.solicitud.id);
   } catch (err) {
-    mostrarError(pAus, err.message);
+    mostrarError(sA, err.message);
   } finally {
-    pAus.querySelectorAll('[data-decidir]').forEach((x) => { x.disabled = false; });
+    sA.querySelectorAll('[data-decidir]').forEach((x) => { x.disabled = false; });
   }
 });
 
-cargarTurnos().catch((err) => mostrarError(pTurnos, err.message));
-cargarAusencias().catch((err) => mostrarError(pAus, err.message));
+cargarTurnos().catch((err) => mostrarError(sT, err.message));
+cargarAusencias().catch((err) => mostrarError(sA, err.message));
 </script>
 </body>
 </html>
