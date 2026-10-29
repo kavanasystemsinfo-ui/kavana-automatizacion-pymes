@@ -2,7 +2,8 @@
 #   - el formulario de uso real (/form/*) y el de ausencias de RRHH (también /form/*)
 #   - los botones Aprobar/Rechazar de los correos (/webhook-waiting/*, enlaces firmados por n8n)
 #   - el panel de la demo (/demo/, archivos estáticos de /var/www/informe-demo)
-#   - las dos rutas de la API de la demo (/webhook/demo-api/informes e /informe)
+#   - la API de la demo (/webhook/demo-api/*: informes de turno, ausencias, decisiones y descarga en Excel;
+#     solo devuelve las filas del identificador de sesión del visitante y no envía correo)
 # El editor de n8n, el resto de webhooks (incluido /webhook/demo-seed) y la API interna no salen a internet.
 informe.kavanasystems.com {
 	encode gzip
@@ -28,7 +29,7 @@ informe.kavanasystems.com {
 		file_server
 	}
 
-	@api path /webhook/demo-api/informes /webhook/demo-api/informe
+	@api path /webhook/demo-api/*
 	handle @api {
 		request_body {
 			max_size 4KB

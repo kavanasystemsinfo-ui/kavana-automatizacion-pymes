@@ -1,0 +1,618 @@
+{
+  "id": "DemoExcelApi0001",
+  "name": "Demo pública · Excel",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "demo-api/excel",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "832e9944-3df3-5203-a0a2-9d3dda16d929",
+      "name": "Descargar Excel",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ],
+      "webhookId": "40814b41-e041-5845-8884-7137cefc01ca"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Valida la petición de descarga: sesión del visitante y qué hoja quiere.\nconst q = $('Descargar Excel').first().json.query ?? {};\nconst sid = String(q.sid ?? '');\nif (!/^[a-f0-9]{32}$/.test(sid)) return [{ json: { ok: false, status: 400, error: 'Identificador de sesión no válido' } }];\nif (!['turnos', 'ausencias'].includes(q.hoja)) return [{ json: { ok: false, status: 400, error: 'Hoja no válida' } }];\nreturn [{ json: { ok: true, sid, hoja: q.hoja } }];\n"
+      },
+      "id": "8c39dc06-17d3-5add-8990-e8a408b149e0",
+      "name": "Elegir hoja",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7eec182a-ce22-5040-8dc0-9faecf86ac7b",
+      "name": "¿Petición válida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.hoja === 'turnos' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a542cd9d-720b-5edb-89f3-e29e4e0358d5",
+      "name": "¿Turnos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "informes_demo",
+        "columns": {
+          "column": [
+            {
+              "name": "sid",
+              "type": "string"
+            },
+            {
+              "name": "fecha",
+              "type": "string"
+            },
+            {
+              "name": "turno",
+              "type": "string"
+            },
+            {
+              "name": "linea",
+              "type": "string"
+            },
+            {
+              "name": "operario",
+              "type": "string"
+            },
+            {
+              "name": "metros",
+              "type": "number"
+            },
+            {
+              "name": "objetivo",
+              "type": "number"
+            },
+            {
+              "name": "eficiencia",
+              "type": "number"
+            },
+            {
+              "name": "parada_averia",
+              "type": "number"
+            },
+            {
+              "name": "parada_cambio_formato",
+              "type": "number"
+            },
+            {
+              "name": "parada_falta_material",
+              "type": "number"
+            },
+            {
+              "name": "parada_otros",
+              "type": "number"
+            },
+            {
+              "name": "paradas_total",
+              "type": "number"
+            },
+            {
+              "name": "motivo_principal",
+              "type": "string"
+            },
+            {
+              "name": "aviso",
+              "type": "boolean"
+            },
+            {
+              "name": "observaciones",
+              "type": "string"
+            },
+            {
+              "name": "registrado_en",
+              "type": "string"
+            },
+            {
+              "name": "creado_ms",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "id": "1fad98d9-77df-5827-8c1c-0578abee4efe",
+      "name": "Asegurar tabla (turnos)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "informes_demo"
+        },
+        "matchType": "allConditions",
+        "returnAll": true
+      },
+      "id": "e22385ac-665c-5f2c-91d0-960133e86594",
+      "name": "Leer turnos",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        40
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "rrhh_demo",
+        "columns": {
+          "column": [
+            {
+              "name": "sid",
+              "type": "string"
+            },
+            {
+              "name": "fecha_solicitud",
+              "type": "string"
+            },
+            {
+              "name": "empleado",
+              "type": "string"
+            },
+            {
+              "name": "departamento",
+              "type": "string"
+            },
+            {
+              "name": "tipo",
+              "type": "string"
+            },
+            {
+              "name": "desde",
+              "type": "string"
+            },
+            {
+              "name": "hasta",
+              "type": "string"
+            },
+            {
+              "name": "dias",
+              "type": "number"
+            },
+            {
+              "name": "saldo_previo",
+              "type": "number"
+            },
+            {
+              "name": "estado",
+              "type": "string"
+            },
+            {
+              "name": "comentario",
+              "type": "string"
+            },
+            {
+              "name": "conflictos",
+              "type": "string"
+            },
+            {
+              "name": "decidido_en",
+              "type": "string"
+            },
+            {
+              "name": "creado_ms",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "id": "836ccf67-4b32-5850-9833-d0971595bd80",
+      "name": "Asegurar tabla (ausencias)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "rrhh_demo"
+        },
+        "matchType": "allConditions",
+        "returnAll": true
+      },
+      "id": "7be8fde2-1b3e-5e18-9769-e6d2c27d7efb",
+      "name": "Leer ausencias",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        200
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convierte las filas del visitante en las columnas del Excel, con cabeceras legibles.\n// Si no tiene filas, devuelve un error en vez de un Excel vacío.\nconst { sid, hoja } = $('Elegir hoja').first().json;\nconst COLUMNAS = {\n  turnos: [\n    ['Fecha', 'fecha'], ['Turno', 'turno'], ['Línea', 'linea'], ['Operario', 'operario'],\n    ['Metros', 'metros'], ['Objetivo (m)', 'objetivo'], ['Eficiencia (%)', 'eficiencia'],\n    ['Avería (min)', 'parada_averia'], ['Cambio de formato (min)', 'parada_cambio_formato'],\n    ['Falta de material (min)', 'parada_falta_material'], ['Otros (min)', 'parada_otros'],\n    ['Paradas totales (min)', 'paradas_total'], ['Motivo principal', 'motivo_principal'],\n    ['Aviso (< 80 %)', (r) => (r.aviso ? 'Sí' : 'No')], ['Observaciones', 'observaciones'],\n    ['Registrado', (r) => String(r.registrado_en ?? '').slice(0, 16).replace('T', ' ')],\n  ],\n  ausencias: [\n    ['Solicitada', 'fecha_solicitud'], ['Empleado', 'empleado'], ['Departamento', 'departamento'],\n    ['Tipo', 'tipo'], ['Desde', 'desde'], ['Hasta', 'hasta'], ['Días laborables', 'dias'],\n    ['Vacaciones antes (de 22)', 'saldo_previo'], ['Estado', 'estado'], ['Coincide con', 'conflictos'],\n    ['Comentario', 'comentario'], ['Decidida', 'decidido_en'],\n  ],\n}[hoja];\n\nconst filas = $input.all().map((i) => i.json)\n  .filter((r) => r.sid === sid)\n  .sort((a, b) => Number(a.creado_ms) - Number(b.creado_ms));\nif (!filas.length) return [{ json: { ok: false, status: 404, error: 'Aún no has enviado nada: no hay filas que descargar.' } }];\n\nreturn filas.map((r) => {\n  const o = {};\n  for (const [titulo, campo] of COLUMNAS) o[titulo] = typeof campo === 'function' ? campo(r) : (r[campo] ?? '');\n  return { json: o };\n});\n"
+      },
+      "id": "12089943-6568-5e00-b3fd-18ed72a2d71a",
+      "name": "Columnas del Excel",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.ok !== false }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d13d1d37-3b5f-57a7-823a-cc88e9861a6f",
+      "name": "¿Hay filas?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1540,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "={{ $('Elegir hoja').first().json.hoja }}-demo.xlsx",
+          "sheetName": "={{ $('Elegir hoja').first().json.hoja === 'turnos' ? 'Informes de turno' : 'Ausencias' }}",
+          "headerRow": true
+        }
+      },
+      "id": "8c82bed3-587e-569a-a543-180ef3f5c389",
+      "name": "Crear .xlsx",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1760,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "inputDataSource": "auto",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              },
+              {
+                "name": "Content-Disposition",
+                "value": "=attachment; filename=\"{{ $('Elegir hoja').first().json.hoja }}-demo.xlsx\""
+              }
+            ]
+          }
+        }
+      },
+      "id": "e14dddb8-35ae-57f4-8a19-6d07b203b789",
+      "name": "Responder Excel",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1980,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, error: $json.error } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          },
+          "responseCode": "={{ $json.status }}"
+        }
+      },
+      "id": "35ea7ec1-f585-5a07-9c06-cd1adaadcba8",
+      "name": "Responder error (petición)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        660,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, error: $json.error } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          },
+          "responseCode": "={{ $json.status }}"
+        }
+      },
+      "id": "11734bd2-343b-51cb-9a80-98209939a461",
+      "name": "Responder sin filas",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1760,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Descargar Excel": {
+      "main": [
+        [
+          {
+            "node": "Elegir hoja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Elegir hoja": {
+      "main": [
+        [
+          {
+            "node": "¿Petición válida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Petición válida?": {
+      "main": [
+        [
+          {
+            "node": "¿Turnos?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder error (petición)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Turnos?": {
+      "main": [
+        [
+          {
+            "node": "Asegurar tabla (turnos)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Asegurar tabla (ausencias)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar tabla (turnos)": {
+      "main": [
+        [
+          {
+            "node": "Leer turnos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer turnos": {
+      "main": [
+        [
+          {
+            "node": "Columnas del Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar tabla (ausencias)": {
+      "main": [
+        [
+          {
+            "node": "Leer ausencias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer ausencias": {
+      "main": [
+        [
+          {
+            "node": "Columnas del Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Columnas del Excel": {
+      "main": [
+        [
+          {
+            "node": "¿Hay filas?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay filas?": {
+      "main": [
+        [
+          {
+            "node": "Crear .xlsx",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder sin filas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear .xlsx": {
+      "main": [
+        [
+          {
+            "node": "Responder Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid"
+  },
+  "pinData": {}
+}

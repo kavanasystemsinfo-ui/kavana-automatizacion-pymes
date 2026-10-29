@@ -3,132 +3,163 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Informe de turno · demo</title>
-<meta name="description" content="Demo del informe de turno automático: panel con un mes de datos inventados y un espacio privado para probarlo.">
+<title>Automatización para pymes · demo</title>
+<meta name="description" content="Prueba sin instalar nada dos automatizaciones con n8n: el informe de turno de planta y las ausencias de RRHH con aprobación. Ves el correo que se enviaría, tu hoja y la descargas en Excel.">
 <style>
   :root {
     --bg: #f6f7f9; --card: #fff; --text: #1d2430; --muted: #5b6676; --line: #e3e6ec;
     --accent: #1f5fbf; --accent-text: #fff; --ok: #067647; --ok-bg: #e7f6ee;
-    --bad: #b42318; --bad-bg: #fdecea; --bar: #7da4dd; --own: #fff7e0;
+    --bad: #b42318; --bad-bg: #fdecea; --warn-bg: #fff7e0; --warn: #8a5a00;
+    --grid: #d5d9e0; --grid-head: #eef0f3; --nuevo: #fff3c4;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #12161c; --card: #1a2029; --text: #e8ecf2; --muted: #9aa5b5; --line: #2b3441;
       --accent: #6ea2f0; --accent-text: #0d1522; --ok: #5fd39a; --ok-bg: #12301f;
-      --bad: #ff8a80; --bad-bg: #3a1815; --bar: #3d669f; --own: #332b12;
+      --bad: #ff8a80; --bad-bg: #3a1815; --warn-bg: #332b12; --warn: #f0c060;
+      --grid: #344052; --grid-head: #232b37; --nuevo: #3d3415;
     }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12161c; --card: #1a2029; --text: #e8ecf2; --muted: #9aa5b5; --line: #2b3441;
+    --accent: #6ea2f0; --accent-text: #0d1522; --ok: #5fd39a; --ok-bg: #12301f;
+    --bad: #ff8a80; --bad-bg: #3a1815; --warn-bg: #332b12; --warn: #f0c060;
+    --grid: #344052; --grid-head: #232b37; --nuevo: #3d3415;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 56px; }
+  main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 56px; }
   h1 { font-size: 24px; margin: 0 0 4px; }
   h2 { font-size: 16px; margin: 0 0 12px; }
+  h2 .paso { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-size: 13px; margin-right: 6px; }
   p { margin: 0 0 8px; }
   .muted { color: var(--muted); }
-  .nota { background: none; border: 0; padding: 0; font: inherit; color: var(--muted); text-decoration: underline; cursor: pointer; }
-  .detalle td { color: var(--muted); font-style: italic; padding-top: 0; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
-  .intro { margin-bottom: 16px; }
-  .aviso-demo { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: var(--card); border: 1px solid var(--line); font-size: 14px; }
-  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
-  .kpi .valor { font-size: 28px; font-weight: 700; line-height: 1.2; }
-  .kpi .etiqueta { color: var(--muted); font-size: 13px; }
-  .kpi.mal .valor { color: var(--bad); }
-  .rejilla { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 16px; }
-  .filtros { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
-  .filtros button, .filtros select { font: inherit; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--text); cursor: pointer; }
-  .filtros button[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
-  .tabla { overflow-x: auto; }
-  table { border-collapse: collapse; width: 100%; font-size: 14px; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
-  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-  tr.propio td { background: var(--own); }
-  .etq { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-  .etq.ok { background: var(--ok-bg); color: var(--ok); }
-  .etq.mal { background: var(--bad-bg); color: var(--bad); }
-  .etq.tu { background: var(--accent); color: var(--accent-text); }
-  .barras .fila { display: grid; grid-template-columns: 130px 1fr 56px; gap: 8px; align-items: center; margin-bottom: 8px; font-size: 14px; }
-  .barras .pista { background: var(--line); border-radius: 6px; height: 12px; overflow: hidden; }
-  .barras .relleno { background: var(--bar); height: 100%; }
-  form { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .pequeno { font-size: 13px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0; }
+  .aviso-demo { margin: 12px 0 16px; padding: 10px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--text); font-size: 14px; }
+  .pestanas { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .pestanas button { font: inherit; font-weight: 600; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--text); cursor: pointer; }
+  .pestanas button[aria-selected="true"] { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .que { margin-bottom: 16px; }
+  .rejilla { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
   label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
   input, select, textarea { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; }
   textarea { resize: vertical; min-height: 40px; }
   form .ancho { grid-column: 1 / -1; }
-  button.enviar { font: inherit; font-weight: 600; padding: 10px 18px; border-radius: 8px; border: 0; background: var(--accent); color: var(--accent-text); cursor: pointer; }
-  button.enviar[disabled] { opacity: .6; cursor: wait; }
-  .resultado { margin-top: 12px; padding: 12px; border-radius: 8px; }
-  .resultado.ok { background: var(--ok-bg); color: var(--ok); }
-  .resultado.mal { background: var(--bad-bg); color: var(--bad); }
-  .resultado .grande { font-size: 24px; font-weight: 700; }
+  .boton { font: inherit; font-weight: 600; padding: 9px 16px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-text); cursor: pointer; }
+  .boton.sec { background: transparent; color: var(--accent); }
+  .boton[disabled] { opacity: .6; cursor: wait; }
+  .boton.mini { padding: 2px 8px; font-size: 12px; border-radius: 6px; }
+  .error { margin-top: 10px; padding: 10px 12px; border-radius: 8px; background: var(--bad-bg); color: var(--bad); }
+  .correo { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .correo .cab { padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: 13px; background: var(--grid-head); }
+  .correo .cab div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .correo .cab b { display: inline-block; width: 56px; color: var(--muted); font-weight: 600; }
+  .correo iframe { display: block; width: 100%; border: 0; background: #fff; min-height: 120px; }
+  .correo .acciones { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--line); flex-wrap: wrap; align-items: center; }
+  .vacio { padding: 24px 12px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; }
+  .hoja-cab { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .hoja-cab h2 { margin: 0; }
+  .hoja { overflow-x: auto; border: 1px solid var(--grid); border-radius: 6px; }
+  .hoja table { border-collapse: collapse; font-size: 13px; min-width: 100%; }
+  .hoja th, .hoja td { border: 1px solid var(--grid); padding: 4px 8px; white-space: nowrap; text-align: left; }
+  .hoja thead th { background: var(--grid-head); color: var(--muted); font-weight: 500; text-align: center; font-size: 12px; }
+  .hoja tbody th { background: var(--grid-head); color: var(--muted); font-weight: 500; text-align: center; width: 36px; font-size: 12px; }
+  .hoja tr.titulos td { font-weight: 700; }
+  .hoja td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .hoja tr.nuevo td { background: var(--nuevo); }
+  .hoja td.mal { color: var(--bad); font-weight: 600; }
+  .hoja td.ok { color: var(--ok); font-weight: 600; }
+  .hoja td.nota { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
   .pie { margin-top: 24px; font-size: 13px; color: var(--muted); }
-  svg text { fill: var(--muted); font-size: 11px; }
-  @media (max-width: 760px) {
-    .kpis { grid-template-columns: repeat(2, 1fr); }
-    .rejilla { grid-template-columns: 1fr; }
-  }
+  [hidden] { display: none !important; }
+  @media (max-width: 760px) { .rejilla { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <main>
-  <header class="intro">
-    <h1>Informe de turno automático</h1>
-    <p class="muted">Al acabar el turno, el operario rellena un formulario en el móvil. n8n calcula la eficiencia y las paradas, lo guarda y, si la eficiencia baja del 80 %, avisa al responsable. Este panel lee esos informes.</p>
-    <p class="aviso-demo"><b>Demo con datos inventados.</b> Los informes de ejemplo no se pueden modificar. Lo que envíes aquí abajo solo lo ves tú, en este navegador, y se borra a las 24 horas. No se envía ningún correo.</p>
+  <header>
+    <h1>Automatización de oficina y planta para pymes</h1>
+    <p class="muted">Dos procesos que en muchas pymes industriales se hacen a mano, automatizados con n8n. Rellena el formulario como lo haría un empleado y mira qué pasa después: el correo que recibiría el responsable y la fila que se añade a la hoja, que puedes descargar en Excel.</p>
+    <p class="aviso-demo"><b>Demo con datos inventados.</b> Lo que envíes solo lo ves tú, en este navegador, y se borra a las 24 horas. No se envía ningún correo: ves exactamente el que se enviaría.</p>
   </header>
 
-  <section class="kpis" aria-label="Resumen" id="kpis"></section>
+  <nav class="pestanas" role="tablist" aria-label="Automatizaciones">
+    <button type="button" role="tab" id="tab-turnos" aria-controls="panel-turnos" data-p="turnos">Planta · Informe de turno</button>
+    <button type="button" role="tab" id="tab-ausencias" aria-controls="panel-ausencias" data-p="ausencias">RRHH · Vacaciones y ausencias</button>
+  </nav>
 
-  <section class="rejilla">
-    <div class="card">
-      <h2>Eficiencia diaria <span class="muted" id="rango"></span></h2>
-      <div id="grafico" role="img" aria-label="Eficiencia media por día"></div>
+  <!-- Planta: informe de turno -->
+  <section id="panel-turnos" role="tabpanel" aria-labelledby="tab-turnos" hidden>
+    <p class="que muted">Al acabar el turno, el operario rellena el formulario en el móvil. El flujo calcula la eficiencia y las paradas, guarda la fila y manda el resumen al jefe de turno; si la eficiencia baja del 80 %, el asunto lleva un aviso con el motivo principal de parada.</p>
+    <div class="rejilla">
+      <div class="card">
+        <h2><span class="paso">1</span>Formulario del operario</h2>
+        <form id="form-turnos" novalidate>
+          <label>Fecha<input type="date" name="fecha" required></label>
+          <label>Turno<select name="turno"><option>Mañana</option><option>Tarde</option><option>Noche</option></select></label>
+          <label>Línea<select name="linea"><option>Perfiladora 1</option><option>Perfiladora 2</option><option>Cizalla</option></select></label>
+          <label>Operario<input name="operario" maxlength="40" value="Tu nombre" required></label>
+          <label>Metros producidos<input type="number" name="metros" min="0" step="1" value="3700" required></label>
+          <label>Objetivo del turno (m)<input type="number" name="objetivo" min="1" step="1" value="5000" required></label>
+          <label>Parada: avería (min)<input type="number" name="parada_averia" min="0" value="45"></label>
+          <label>Parada: cambio de formato (min)<input type="number" name="parada_cambio_formato" min="0" value="20"></label>
+          <label>Parada: falta de material (min)<input type="number" name="parada_falta_material" min="0" value="0"></label>
+          <label>Parada: otros (min)<input type="number" name="parada_otros" min="0" value="0"></label>
+          <label class="ancho">Observaciones<textarea name="observaciones" maxlength="200" rows="2">Rodillo 3 con holgura, avisado a mantenimiento.</textarea></label>
+          <div class="ancho"><button class="boton" type="submit">Enviar informe</button></div>
+        </form>
+        <div class="error" role="alert" hidden></div>
+      </div>
+      <div class="card">
+        <h2><span class="paso">2</span>Correo que se enviaría</h2>
+        <div class="correo-zona" aria-live="polite"><p class="vacio">Envía el formulario y aquí verás el correo que recibiría el jefe de turno.</p></div>
+      </div>
     </div>
     <div class="card">
-      <h2>Minutos de parada por motivo</h2>
-      <div class="barras" id="paradas"></div>
+      <div class="hoja-cab">
+        <h2><span class="paso">3</span>Tu hoja de informes de turno</h2>
+        <button type="button" class="boton sec descargar" data-hoja="turnos">Descargar Excel (.xlsx)</button>
+      </div>
+      <div class="hoja"><table><thead></thead><tbody></tbody></table></div>
+      <p class="muted pequeno" style="margin-top:8px">En una empresa, esta hoja sería un Excel o una hoja de Google compartida con el responsable. El Excel lo genera el propio flujo de n8n.</p>
     </div>
   </section>
 
-  <section class="card" style="margin-bottom:16px">
-    <h2>Prueba el sistema</h2>
-    <form id="formulario" novalidate>
-      <label>Fecha<input type="date" name="fecha" required></label>
-      <label>Turno<select name="turno"><option>Mañana</option><option>Tarde</option><option>Noche</option></select></label>
-      <label>Línea<select name="linea"><option>Perfiladora 1</option><option>Perfiladora 2</option><option>Cizalla</option></select></label>
-      <label>Operario<input name="operario" maxlength="40" value="Tu nombre" required></label>
-      <label>Metros producidos<input type="number" name="metros" min="0" step="1" value="3200" required></label>
-      <label>Objetivo del turno (m)<input type="number" name="objetivo" min="1" step="1" value="5000" required></label>
-      <label>Parada: avería (min)<input type="number" name="parada_averia" min="0" value="45"></label>
-      <label>Parada: cambio de formato (min)<input type="number" name="parada_cambio_formato" min="0" value="20"></label>
-      <label>Parada: falta de material (min)<input type="number" name="parada_falta_material" min="0" value="0"></label>
-      <label>Parada: otros (min)<input type="number" name="parada_otros" min="0" value="0"></label>
-      <label class="ancho">Observaciones<textarea name="observaciones" maxlength="200" rows="2"></textarea></label>
-      <div class="ancho"><button class="enviar" type="submit" id="enviar">Enviar informe</button></div>
-    </form>
-    <div id="resultado" role="status" aria-live="polite"></div>
-  </section>
-
-  <section class="card">
-    <h2>Informes</h2>
-    <div class="filtros" id="filtros">
-      <button type="button" data-v="todos" aria-pressed="true">Todos</button>
-      <button type="button" data-v="demo" aria-pressed="false">Solo la demo</button>
-      <button type="button" data-v="propios" aria-pressed="false">Mis informes</button>
-      <select id="linea-filtro" aria-label="Filtrar por línea">
-        <option value="">Todas las líneas</option><option>Perfiladora 1</option><option>Perfiladora 2</option><option>Cizalla</option>
-      </select>
-      <button type="button" data-v="avisos" aria-pressed="false">Solo avisos (&lt; 80 %)</button>
+  <!-- RRHH: ausencias -->
+  <section id="panel-ausencias" role="tabpanel" aria-labelledby="tab-ausencias" hidden>
+    <p class="que muted">El empleado pide vacaciones o un permiso. El flujo cuenta los días laborables (sin fines de semana ni festivos), comprueba el saldo de 22 días y los solapes, avisa si coincide con alguien de su departamento y manda la solicitud a la responsable con dos botones. Al decidir, el empleado recibe la respuesta y la hoja se actualiza.</p>
+    <div class="rejilla">
+      <div class="card">
+        <h2><span class="paso">1</span>Solicitud del empleado</h2>
+        <form id="form-ausencias" novalidate>
+          <label>Empleado<select name="empleado"><option>Marta Soler</option><option>Laura Gómez</option><option>Nuria Ferrer</option><option>Hugo Ortiz</option><option>Pablo Cano</option></select></label>
+          <label>Tipo<select name="tipo"><option>Vacaciones</option><option>Asuntos propios</option><option>Permiso retribuido</option></select></label>
+          <label>Desde<input type="date" name="desde" required></label>
+          <label>Hasta (incluido)<input type="date" name="hasta" required></label>
+          <label class="ancho">Comentario<textarea name="comentario" maxlength="200" rows="2">Viaje familiar.</textarea></label>
+          <div class="ancho"><button class="boton" type="submit">Enviar solicitud</button></div>
+        </form>
+        <div class="error" role="alert" hidden></div>
+        <p class="muted pequeno" style="margin-top:10px" id="companeros"></p>
+      </div>
+      <div class="card">
+        <h2><span class="paso">2</span>Correo que se enviaría</h2>
+        <div class="correo-zona" aria-live="polite"><p class="vacio">Envía la solicitud y aquí verás el correo de la responsable, con los botones para aprobar o rechazar.</p></div>
+      </div>
     </div>
-    <div class="tabla"><table>
-      <thead><tr><th>Fecha</th><th>Turno</th><th>Línea</th><th>Operario</th><th class="num">Metros</th><th class="num">Eficiencia</th><th class="num">Paradas</th><th>Motivo principal</th><th></th></tr></thead>
-      <tbody id="filas"></tbody>
-    </table></div>
-    <p class="muted" id="pie-tabla" style="margin-top:8px"></p>
+    <div class="card">
+      <div class="hoja-cab">
+        <h2><span class="paso">3</span>Tu hoja de ausencias</h2>
+        <button type="button" class="boton sec descargar" data-hoja="ausencias">Descargar Excel (.xlsx)</button>
+      </div>
+      <div class="hoja"><table><thead></thead><tbody></tbody></table></div>
+      <p class="muted pequeno" style="margin-top:8px">Las solicitudes pendientes también se pueden decidir desde aquí. En la empresa, la responsable lo hace desde el propio correo.</p>
+    </div>
   </section>
 
-  <p class="pie">Construido con n8n autoalojado. El panel y el formulario de esta página hablan con dos rutas públicas del flujo "Demo pública · API". Tu espacio es privado porque nadie puede adivinar el identificador aleatorio que guarda tu navegador; no hay cuentas ni inicio de sesión.</p>
+  <p class="pie">Construido con n8n autoalojado en un VPS. La página habla con los flujos "Demo pública · API", "Demo pública · RRHH" y "Demo pública · Excel", que usan los mismos cálculos y plantillas de correo que los flujos reales. Tu espacio es privado porque nadie puede adivinar el identificador aleatorio que guarda tu navegador; no hay cuentas ni inicio de sesión.</p>
 </main>
 
 <script>
@@ -136,150 +167,205 @@ const API = '/webhook/demo-api';
 const NF = new Intl.NumberFormat('es-ES');
 const ESC = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const pct = (n) => (Math.round(n * 10) / 10).toLocaleString('es-ES') + ' %';
+const leer = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 
 function sesion() {
-  let sid = null;
-  try { sid = localStorage.getItem('informe-demo-sid'); } catch (e) {}
+  let sid = leer('informe-demo-sid');
   if (!/^[a-f0-9]{32}$/.test(sid || '')) {
     const b = new Uint8Array(16);
     crypto.getRandomValues(b);
     sid = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
-    try { localStorage.setItem('informe-demo-sid', sid); } catch (e) {}
+    guardar('informe-demo-sid', sid);
   }
   return sid;
 }
 const SID = sesion();
 
-let filas = [];
-let filtro = 'todos';
-let linea = '';
-
-async function cargar() {
-  const r = await fetch(`${API}/informes?sid=${SID}`, { cache: 'no-store' });
-  if (!r.ok) throw new Error('No se pudo leer la demo');
-  filas = (await r.json()).filas || [];
-  pintar();
+async function pedir(ruta, cuerpo) {
+  const r = await fetch(API + ruta, cuerpo
+    ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...cuerpo, sid: SID }) }
+    : { cache: 'no-store' });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || j.ok === false) throw new Error(j.error || 'La demo no responde. Inténtalo de nuevo.');
+  return j;
 }
 
-function visibles() {
-  return filas.filter((f) =>
-    (filtro !== 'demo' || !f.propio) && (filtro !== 'propios' || f.propio) && (filtro !== 'avisos' || f.aviso) &&
-    (!linea || f.linea === linea));
-}
-
-function pintar() {
-  const base = filas.filter((f) => !linea || f.linea === linea);
-  const n = base.length;
-  const media = n ? base.reduce((a, f) => a + f.eficiencia, 0) / n : 0;
-  const avisos = base.filter((f) => f.aviso).length;
-  const paradas = base.reduce((a, f) => a + f.paradas_total, 0);
-  document.getElementById('kpis').innerHTML = [
-    ['Eficiencia media', n ? pct(media) : '–', media < 80 && n ? 'mal' : ''],
-    ['Informes', NF.format(n), ''],
-    ['Avisos (< 80 %)', NF.format(avisos), avisos ? 'mal' : ''],
-    ['Minutos de parada', NF.format(paradas), ''],
-  ].map(([e, v, c]) => `<div class="card kpi ${c}"><div class="valor">${v}</div><div class="etiqueta">${e}</div></div>`).join('');
-
-  grafico(base);
-  barrasParadas(base);
-
-  const v = visibles();
-  document.getElementById('filas').innerHTML = v.slice(0, 60).map((f) => `
-    <tr class="${f.propio ? 'propio' : ''}">
-      <td>${ESC(f.fecha)}</td><td>${ESC(f.turno)}</td><td>${ESC(f.linea)}</td><td>${ESC(f.operario)}${f.propio ? ' <span class="etq tu">tú</span>' : ''}</td>
-      <td class="num">${NF.format(f.metros)} / ${NF.format(f.objetivo)}</td>
-      <td class="num"><span class="etq ${f.aviso ? 'mal' : 'ok'}">${pct(f.eficiencia)}</span></td>
-      <td class="num">${f.paradas_total} min</td><td>${ESC(f.motivo_principal)}</td>
-      <td class="muted">${f.observaciones ? '<button type="button" class="nota" aria-expanded="false">ver nota</button>' : ''}</td>
-    </tr>${f.observaciones ? `<tr class="detalle" hidden><td colspan="9">${ESC(f.observaciones)}</td></tr>` : ''}`).join('') || '<tr><td colspan="9" class="muted">Sin informes con este filtro.</td></tr>';
-  document.getElementById('pie-tabla').textContent = v.length > 60 ? `Se muestran los 60 más recientes de ${v.length}.` : `${v.length} informes.`;
-}
-
-document.getElementById('filas').addEventListener('click', (e) => {
-  const b = e.target.closest('.nota');
-  if (!b) return;
-  const detalle = b.closest('tr').nextElementSibling;
-  detalle.hidden = !detalle.hidden;
-  b.setAttribute('aria-expanded', String(!detalle.hidden));
-  b.textContent = detalle.hidden ? 'ver nota' : 'ocultar';
-});
-
-function grafico(base) {
-  const porDia = {};
-  base.forEach((f) => { (porDia[f.fecha] ||= []).push(f.eficiencia); });
-  const dias = Object.keys(porDia).sort();
-  const el = document.getElementById('grafico');
-  document.getElementById('rango').textContent = dias.length ? `· ${dias[0]} a ${dias[dias.length - 1]}` : '';
-  if (!dias.length) { el.innerHTML = '<p class="muted">Sin datos.</p>'; return; }
-  const W = 640, H = 200, m = { l: 34, r: 8, t: 8, b: 22 };
-  const iw = W - m.l - m.r, ih = H - m.t - m.b, bw = iw / dias.length;
-  const y = (v) => m.t + ih - (Math.min(v, 110) / 110) * ih;
-  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="presentation">`;
-  [0, 50, 80, 100].forEach((t) => {
-    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(t)}" y2="${y(t)}" ${t === 80 ? 'stroke="var(--bad)" stroke-dasharray="4 3"' : 'stroke="var(--line)"'}/>`;
-    s += `<text x="${m.l - 4}" y="${y(t) + 4}" text-anchor="end">${t}</text>`;
+// ---- Pestañas ----
+const pestanas = document.querySelectorAll('[role="tab"]');
+function abrir(p) {
+  pestanas.forEach((t) => {
+    const si = t.dataset.p === p;
+    t.setAttribute('aria-selected', String(si));
+    document.getElementById(t.getAttribute('aria-controls')).hidden = !si;
   });
-  dias.forEach((d, i) => {
-    const v = porDia[d].reduce((a, b) => a + b, 0) / porDia[d].length;
-    const x = m.l + i * bw + bw * 0.15;
-    s += `<rect x="${x}" y="${y(v)}" width="${bw * 0.7}" height="${m.t + ih - y(v)}" rx="2" fill="${v < 80 ? 'var(--bad)' : 'var(--bar)'}"><title>${d}: ${pct(v)}</title></rect>`;
+  guardar('informe-demo-pestana', p);
+}
+pestanas.forEach((t) => t.addEventListener('click', () => abrir(t.dataset.p)));
+abrir(leer('informe-demo-pestana') === 'ausencias' ? 'ausencias' : 'turnos');
+
+// ---- Hoja y correo ----
+const LETRAS = 'ABCDEFGHIJKLMNOP';
+function pintarHoja(panel, columnas, filas, nuevo) {
+  const tabla = panel.querySelector('.hoja table');
+  tabla.querySelector('thead').innerHTML = '<tr><th></th>' + columnas.map((_, i) => `<th>${LETRAS[i]}</th>`).join('') + '</tr>';
+  const titulos = '<tr class="titulos"><th>1</th>' + columnas.map((c) => `<td>${ESC(c.t)}</td>`).join('') + '</tr>';
+  const cuerpo = filas.map((f, i) => `<tr class="${nuevo !== undefined && nuevo === f.__clave ? 'nuevo' : ''}"><th>${i + 2}</th>` +
+    columnas.map((c) => c.html(f)).join('') + '</tr>').join('');
+  const vacias = Array.from({ length: Math.max(0, 3 - filas.length) }, (_, i) =>
+    `<tr><th>${filas.length + i + 2}</th>` + columnas.map(() => '<td>&nbsp;</td>').join('') + '</tr>').join('');
+  tabla.querySelector('tbody').innerHTML = titulos + cuerpo + vacias;
+}
+const celda = (v, clase = '') => `<td class="${clase}">${ESC(v)}</td>`;
+
+function pintarCorreo(panel, correo, acciones = '') {
+  const zona = panel.querySelector('.correo-zona');
+  zona.innerHTML = `<div class="correo">
+    <div class="cab"><div><b>De</b>${ESC(correo.de)}</div><div><b>Para</b>${ESC(correo.para)}</div><div><b>Asunto</b><strong>${ESC(correo.asunto)}</strong></div></div>
+    <iframe sandbox="allow-same-origin" title="Vista previa del correo"></iframe>
+    ${acciones ? `<div class="acciones">${acciones}</div>` : ''}
+  </div>`;
+  const marco = zona.querySelector('iframe');
+  marco.addEventListener('load', () => {
+    try { marco.style.height = (marco.contentDocument.documentElement.scrollHeight + 8) + 'px'; } catch (e) {}
   });
-  s += `<text x="${m.l}" y="${H - 6}">${dias[0].slice(5)}</text><text x="${W - m.r}" y="${H - 6}" text-anchor="end">${dias[dias.length - 1].slice(5)}</text>`;
-  el.innerHTML = s + '</svg>';
+  marco.srcdoc = `<!doctype html><meta charset="utf-8"><body style="margin:12px">${correo.html}</body>`;
 }
 
-function barrasParadas(base) {
-  const t = { 'Avería': 0, 'Cambio de formato': 0, 'Falta de material': 0, 'Otros': 0 };
-  base.forEach((f) => {
-    t['Avería'] += f.parada_averia; t['Cambio de formato'] += f.parada_cambio_formato;
-    t['Falta de material'] += f.parada_falta_material; t['Otros'] += f.parada_otros;
-  });
-  const max = Math.max(1, ...Object.values(t));
-  document.getElementById('paradas').innerHTML = Object.entries(t).map(([k, v]) =>
-    `<div class="fila"><span>${k}</span><div class="pista"><div class="relleno" style="width:${(v / max) * 100}%"></div></div><span class="muted" style="text-align:right">${NF.format(v)}</span></div>`).join('');
+function mostrarError(panel, msg) {
+  const e = panel.querySelector('.error');
+  e.textContent = msg || '';
+  e.hidden = !msg;
 }
 
-document.getElementById('filtros').addEventListener('click', (e) => {
-  const b = e.target.closest('button[data-v]');
-  if (!b) return;
-  const v = b.dataset.v;
-  if (v === 'avisos') { filtro = filtro === 'avisos' ? 'todos' : 'avisos'; }
-  else { filtro = v; }
-  document.querySelectorAll('#filtros button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.v === filtro)));
-  pintar();
-});
-document.getElementById('linea-filtro').addEventListener('change', (e) => { linea = e.target.value; pintar(); });
+async function enviar(form, accion) {
+  const panel = form.closest('[role="tabpanel"]');
+  const btn = form.querySelector('button[type="submit"]');
+  mostrarError(panel, '');
+  btn.disabled = true;
+  try { await accion(Object.fromEntries(new FormData(form).entries())); }
+  catch (err) { mostrarError(panel, err.message); }
+  finally { btn.disabled = false; }
+}
 
-const form = document.getElementById('formulario');
-form.fecha.value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-const OBJETIVO = { 'Perfiladora 1': 5000, 'Perfiladora 2': 4000, 'Cizalla': 4000 };
-form.linea.addEventListener('change', () => { form.objetivo.value = OBJETIVO[form.linea.value]; });
-
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const out = document.getElementById('resultado');
-  const btn = document.getElementById('enviar');
-  const datos = Object.fromEntries(new FormData(form).entries());
-  datos.sid = SID;
-  btn.disabled = true; out.className = 'resultado'; out.textContent = 'Enviando…';
+document.querySelectorAll('.descargar').forEach((b) => b.addEventListener('click', async () => {
+  const panel = b.closest('[role="tabpanel"]');
+  mostrarError(panel, '');
+  b.disabled = true;
   try {
-    const r = await fetch(`${API}/informe`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok || !j.ok) { out.className = 'resultado mal'; out.textContent = j.error || 'No se pudo guardar el informe.'; return; }
-    const i = j.informe;
-    out.className = 'resultado ' + (i.aviso ? 'mal' : 'ok');
-    out.innerHTML = `<div class="grande">${pct(i.eficiencia)} de eficiencia</div>
-      <div>${ESC(i.linea)} · turno de ${ESC(i.turno.toLowerCase())}: ${NF.format(i.metros)} de ${NF.format(i.objetivo)} m y ${i.paradas_total} min de parada (principal: ${ESC(i.motivo_principal)}).</div>
-      <div>${i.aviso ? '<b>Por debajo del 80 %.</b> En producción, aquí saldría un correo de aviso al responsable con el motivo principal.' : 'En producción, el responsable recibiría el resumen del turno por correo.'} Tu informe ya aparece abajo, marcado como tuyo.</div>`;
-    filtro = 'propios';
-    document.querySelectorAll('#filtros button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.v === filtro)));
-    await cargar();
-  } catch (err) {
-    out.className = 'resultado mal'; out.textContent = 'No hay conexión con la demo. Inténtalo de nuevo.';
-  } finally { btn.disabled = false; }
+    const r = await fetch(`${API}/excel?sid=${SID}&hoja=${b.dataset.hoja}`, { cache: 'no-store' });
+    if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || 'No se pudo generar el Excel.'); }
+    const url = URL.createObjectURL(await r.blob());
+    const a = document.createElement('a');
+    a.href = url; a.download = `${b.dataset.hoja}-demo.xlsx`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  } catch (err) { mostrarError(panel, err.message); }
+  finally { b.disabled = false; }
+}));
+
+// ---- Planta: informe de turno ----
+const pTurnos = document.getElementById('panel-turnos');
+const COL_TURNOS = [
+  { t: 'Fecha', html: (f) => celda(f.fecha) },
+  { t: 'Turno', html: (f) => celda(f.turno) },
+  { t: 'Línea', html: (f) => celda(f.linea) },
+  { t: 'Operario', html: (f) => celda(f.operario) },
+  { t: 'Metros', html: (f) => celda(NF.format(f.metros), 'num') },
+  { t: 'Objetivo', html: (f) => celda(NF.format(f.objetivo), 'num') },
+  { t: 'Eficiencia', html: (f) => celda(pct(f.eficiencia), 'num ' + (f.aviso ? 'mal' : 'ok')) },
+  { t: 'Paradas (min)', html: (f) => celda(f.paradas_total, 'num') },
+  { t: 'Motivo principal', html: (f) => celda(f.motivo_principal) },
+  { t: 'Aviso', html: (f) => celda(f.aviso ? 'Sí' : 'No', f.aviso ? 'mal' : '') },
+  { t: 'Observaciones', html: (f) => `<td class="nota" title="${ESC(f.observaciones)}">${ESC(f.observaciones)}</td>` },
+];
+let filasTurnos = [];
+async function cargarTurnos(nuevo) {
+  filasTurnos = (await pedir(`/informes?sid=${SID}`)).filas || [];
+  filasTurnos.forEach((f) => { f.__clave = f.registrado_en; });
+  pintarHoja(pTurnos, COL_TURNOS, filasTurnos, nuevo);
+}
+const fT = document.getElementById('form-turnos');
+fT.fecha.value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const OBJETIVO = { 'Perfiladora 1': 5000, 'Perfiladora 2': 4000, 'Cizalla': 4000 };
+fT.linea.addEventListener('change', () => { fT.objetivo.value = OBJETIVO[fT.linea.value]; });
+fT.addEventListener('submit', (e) => {
+  e.preventDefault();
+  enviar(fT, async (datos) => {
+    const j = await pedir('/informe', datos);
+    pintarCorreo(pTurnos, j.correo);
+    await cargarTurnos(j.informe.registrado_en);
+  });
 });
 
-cargar().catch(() => { document.getElementById('filas').innerHTML = '<tr><td colspan="9" class="muted">No se pudo cargar la demo.</td></tr>'; });
+// ---- RRHH: ausencias ----
+const pAus = document.getElementById('panel-ausencias');
+const botonesDecision = (id, mini) =>
+  `<button type="button" class="boton ${mini ? 'mini' : ''}" data-decidir="aprobar" data-id="${id}">Aprobar</button>` +
+  `<button type="button" class="boton sec ${mini ? 'mini' : ''}" data-decidir="rechazar" data-id="${id}">Rechazar</button>`;
+const COL_AUS = [
+  { t: 'Solicitada', html: (f) => celda(f.fecha_solicitud) },
+  { t: 'Empleado', html: (f) => celda(f.empleado) },
+  { t: 'Departamento', html: (f) => celda(f.departamento) },
+  { t: 'Tipo', html: (f) => celda(f.tipo) },
+  { t: 'Desde', html: (f) => celda(f.desde) },
+  { t: 'Hasta', html: (f) => celda(f.hasta) },
+  { t: 'Días', html: (f) => celda(f.dias, 'num') },
+  { t: 'Saldo previo', html: (f) => celda(f.saldo_previo, 'num') },
+  { t: 'Estado', html: (f) => f.estado === 'Pendiente'
+    ? `<td>Pendiente ${botonesDecision(f.id, true)}</td>`
+    : celda(f.estado, f.estado === 'Aprobada' ? 'ok' : 'mal') },
+  { t: 'Coincide con', html: (f) => `<td class="nota" title="${ESC(f.conflictos)}">${f.conflictos ? '⚠ ' + ESC(f.conflictos) : ''}</td>` },
+  { t: 'Comentario', html: (f) => `<td class="nota" title="${ESC(f.comentario)}">${ESC(f.comentario)}</td>` },
+];
+async function cargarAusencias(nuevo) {
+  const filas = (await pedir(`/ausencias?sid=${SID}`)).filas || [];
+  filas.forEach((f) => { f.__clave = f.id; });
+  pintarHoja(pAus, COL_AUS, filas, nuevo);
+}
+
+// Mismas fechas que los compañeros ficticios del flujo: la semana que viene no, la siguiente.
+const DIA = 864e5;
+const isoDia = (d) => d.toISOString().slice(0, 10);
+const hoyUTC = (() => { const d = new Date(); return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); })();
+const base = new Date(hoyUTC.getTime() + ((((8 - hoyUTC.getUTCDay()) % 7) || 7) + 7) * DIA);
+const mas = (n) => isoDia(new Date(base.getTime() + n * DIA));
+const fechaCorta = (s) => s.slice(8, 10) + '/' + s.slice(5, 7);
+const fA = document.getElementById('form-ausencias');
+fA.desde.value = mas(2); fA.hasta.value = mas(4);
+document.getElementById('companeros').textContent =
+  `Ausencias ya registradas de compañeros ficticios: Iván Ruiz (Producción), vacaciones del ${fechaCorta(mas(0))} al ${fechaCorta(mas(4))}; ` +
+  `Carmen Vidal (Administración), asuntos propios el ${fechaCorta(mas(3))}; Sergio Mata (Logística), vacaciones del ${fechaCorta(mas(7))} al ${fechaCorta(mas(11))}. ` +
+  'Las fechas propuestas coinciden con Iván para que veas el aviso.';
+
+fA.addEventListener('submit', (e) => {
+  e.preventDefault();
+  enviar(fA, async (datos) => {
+    const j = await pedir('/ausencia', datos);
+    pintarCorreo(pAus, j.correo, botonesDecision(j.solicitud.id, false) +
+      '<span class="muted pequeno">En el correo real, la responsable decide con estos dos botones.</span>');
+    await cargarAusencias(j.solicitud.id);
+  });
+});
+
+pAus.addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-decidir]');
+  if (!b) return;
+  mostrarError(pAus, '');
+  pAus.querySelectorAll('[data-decidir]').forEach((x) => { x.disabled = true; });
+  try {
+    const j = await pedir('/ausencia-decision', { id: Number(b.dataset.id), decision: b.dataset.decidir });
+    pintarCorreo(pAus, j.correo);
+    await cargarAusencias(j.solicitud.id);
+  } catch (err) {
+    mostrarError(pAus, err.message);
+  } finally {
+    pAus.querySelectorAll('[data-decidir]').forEach((x) => { x.disabled = false; });
+  }
+});
+
+cargarTurnos().catch((err) => mostrarError(pTurnos, err.message));
+cargarAusencias().catch((err) => mostrarError(pAus, err.message));
 </script>
 </body>
 </html>

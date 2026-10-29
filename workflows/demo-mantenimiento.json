@@ -367,6 +367,113 @@
       "parameters": {
         "jsCode": "\nreturn [{ json: { sembradas: $('Generar semilla').all().length } }];\n"
       }
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "rrhh_demo",
+        "columns": {
+          "column": [
+            {
+              "name": "sid",
+              "type": "string"
+            },
+            {
+              "name": "fecha_solicitud",
+              "type": "string"
+            },
+            {
+              "name": "empleado",
+              "type": "string"
+            },
+            {
+              "name": "departamento",
+              "type": "string"
+            },
+            {
+              "name": "tipo",
+              "type": "string"
+            },
+            {
+              "name": "desde",
+              "type": "string"
+            },
+            {
+              "name": "hasta",
+              "type": "string"
+            },
+            {
+              "name": "dias",
+              "type": "number"
+            },
+            {
+              "name": "saldo_previo",
+              "type": "number"
+            },
+            {
+              "name": "estado",
+              "type": "string"
+            },
+            {
+              "name": "comentario",
+              "type": "string"
+            },
+            {
+              "name": "conflictos",
+              "type": "string"
+            },
+            {
+              "name": "decidido_en",
+              "type": "string"
+            },
+            {
+              "name": "creado_ms",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "id": "038292b7-786d-5836-966f-ef86a3387b41",
+      "name": "Asegurar tabla (purga RRHH)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "rrhh_demo"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "creado_ms",
+              "condition": "lt",
+              "keyValue": "={{ Date.now() - 24 * 3600 * 1000 }}"
+            }
+          ]
+        }
+      },
+      "id": "2d4eb4c9-5704-5940-9529-a09cd91fa6b3",
+      "name": "Borrar ausencias de más de 24 h",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        -200
+      ]
     }
   ],
   "connections": {
@@ -375,6 +482,11 @@
         [
           {
             "node": "Asegurar tabla (purga)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Asegurar tabla (purga RRHH)",
             "type": "main",
             "index": 0
           }
@@ -452,6 +564,17 @@
         [
           {
             "node": "Resumen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar tabla (purga RRHH)": {
+      "main": [
+        [
+          {
+            "node": "Borrar ausencias de más de 24 h",
             "type": "main",
             "index": 0
           }
