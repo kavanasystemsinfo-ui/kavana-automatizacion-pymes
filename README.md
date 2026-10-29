@@ -6,7 +6,14 @@ Demo con datos inventados de líneas de perfilado metálico.
 
 ## Estado
 
-En construcción. Ya funciona el formulario: calcula la eficiencia y las paradas y guarda cada informe en la tabla de datos `informes_turno` de n8n. Faltan los avisos, el resumen diario y la publicación del formulario.
+En construcción. Ya funcionan el formulario, el correo de cada turno (con aviso si la eficiencia baja del 80 %) y el resumen diario de las 07:00. Falta publicar el formulario en internet.
+
+## Correo
+
+Los dos flujos usan una credencial SMTP de n8n llamada `SMTP Gmail Kavana`, que se crea a mano en el editor y no está en el repo. Con Gmail: `smtp.gmail.com`, puerto 587, SSL/TLS desactivado (va por STARTTLS) y una contraseña de aplicación. Muchos proveedores de VPS, como Hetzner, bloquean la salida por los puertos 465 y 25.
+
+- **Informe de turno**: después de guardar, envía un correo con la eficiencia, los metros frente al objetivo y las paradas por motivo. Si la eficiencia baja del 80 %, el asunto empieza por "⚠ AVISO" y el correo destaca el motivo principal. Si el correo falla, el informe queda guardado y el operario ve su confirmación igual.
+- **Resumen diario de turnos**: cada día a las 07:00 (hora de Madrid) resume los informes del día anterior: por línea (turnos, metros, eficiencia, paradas y avisos), la eficiencia global y las 3 paradas más largas. Si no hubo informes, también avisa. Se puede lanzar a mano desde el editor con el nodo "Lanzar a mano".
 
 ## Flujo "Informe de turno"
 
