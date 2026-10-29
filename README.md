@@ -4,13 +4,50 @@ Al acabar el turno, el operario rellena un formulario en el móvil. n8n calcula 
 
 Demo con datos inventados de líneas de perfilado metálico.
 
+![Panel de la demo](docs/demo-panel.png)
+
+## Qué problema resuelve
+
+Muchas pymes industriales anotan el turno en papel o en una hoja suelta que alguien pasa a limpio al día siguiente. Cuando la eficiencia cae, el jefe de turno se entera tarde y casi nunca sabe por qué.
+
+Con este flujo, el operario tarda menos de un minuto en rellenar el formulario desde el móvil y el responsable recibe en el momento:
+
+- la eficiencia del turno (metros frente al objetivo),
+- los minutos de parada por motivo (avería, cambio de formato, falta de material, otros),
+- un aviso con el motivo principal si la eficiencia baja del 80 %.
+
+Cada mañana a las 07:00 llega un resumen del día anterior por línea, con la eficiencia global y las 3 paradas más largas. Sin pasar nada a limpio, sin licencias y con un servidor pequeño.
+
+## Cómo funciona
+
+```mermaid
+flowchart LR
+    M[Móvil del operario] -->|formulario| N[n8n]
+    N -->|calcula eficiencia y paradas| T[(Tabla informes_turno)]
+    N -->|correo por turno, con aviso si baja del 80 %| R[Responsable]
+    C[Cada día 07:00] --> N
+    N -->|resumen del día anterior| R
+    D[Panel /demo] -->|API de solo lectura| N
+```
+
+![Formulario en el móvil](docs/formulario-movil.png)
+
 ## Estado
 
-Funciona en producción: formulario público en https://informe.kavanasystems.com, correo por turno con aviso si la eficiencia baja del 80 % y resumen diario a las 07:00. Pendiente: datos de demo y capturas.
+Funciona en producción: formulario público en https://informe.kavanasystems.com, correo por turno con aviso si la eficiencia baja del 80 %, resumen diario a las 07:00 y panel de demo en https://informe.kavanasystems.com/demo/ con un mes de informes inventados.
+
+## Demo pública
+
+El panel `/demo/` lee los informes de ejemplo y deja enviar un informe de prueba. Los datos sembrados no se pueden modificar. Lo que envía cada visitante solo lo ve él y se borra a las 24 horas (flujo `demo-mantenimiento`). No se manda ningún correo desde la demo.
+
+```bash
+bash scripts/importar-flujos.sh   # importa todos los flujos, demo incluida
+bash scripts/publicar-demo.sh     # copia el panel y siembra el mes de ejemplo
+```
 
 ## Publicación
 
-Solo el formulario sale a internet. Caddy publica `/form/*` y `/form-waiting/*`, manda la raíz al formulario y devuelve 404 para todo lo demás, editor y API incluidos (`deploy/Caddyfile.informe`). n8n sigue escuchando solo en `127.0.0.1` y genera los enlaces públicos con `N8N_WEBHOOK_URL`.
+Solo salen a internet el formulario, el panel de la demo y las dos rutas de su API. Caddy publica `/form/*` y `/form-waiting/*`, `/demo/*` y `/webhook/demo-api/informes` e `/informe`, manda la raíz al panel y devuelve 404 para todo lo demás, editor y resto de la API incluidos (`deploy/Caddyfile.informe`). n8n sigue escuchando solo en `127.0.0.1` y genera los enlaces públicos con `N8N_WEBHOOK_URL`.
 
 Para añadir el bloque a Caddy sin cortar el servicio:
 
@@ -68,4 +105,7 @@ y luego entra en http://localhost:5678.
 
 - `docker-compose.yml`: n8n con la versión fijada, un volumen persistente y logs limitados.
 - `workflows/`: flujos exportados en JSON, sin credenciales.
-- `scripts/deploy.sh`: despliegue y actualización.
+- `scripts/`: `deploy.sh` (despliegue y actualización), `importar-flujos.sh`, `probar-formulario.sh` y `publicar-demo.sh`.
+- `demo/`: panel estático de la demo.
+- `deploy/Caddyfile.informe`: bloque de Caddy con las rutas públicas.
+- `docs/`: capturas del README.
