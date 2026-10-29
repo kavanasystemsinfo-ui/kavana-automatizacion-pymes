@@ -1,0 +1,127 @@
+{
+  "id": "InfTurnoForm0001",
+  "name": "Informe de turno",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid"
+  },
+  "nodes": [
+    {
+      "id": "6d1f0a52-1b8e-4c1e-9a10-000000000001",
+      "name": "Formulario",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.4,
+      "position": [0, 0],
+      "webhookId": "5f3c2a1e-7b4d-4e8a-9c21-3d6e8f0a1b27",
+      "parameters": {
+        "path": "informe-turno",
+        "formTitle": "Informe de turno",
+        "formDescription": "Rellénalo al acabar el turno. Tarda menos de un minuto.",
+        "formFields": {
+          "values": [
+            { "fieldName": "fecha", "fieldLabel": "Fecha", "fieldType": "date", "requiredField": true },
+            {
+              "fieldName": "turno", "fieldLabel": "Turno", "fieldType": "dropdown", "requiredField": true,
+              "fieldOptions": { "values": [{ "option": "Mañana" }, { "option": "Tarde" }, { "option": "Noche" }] }
+            },
+            {
+              "fieldName": "linea", "fieldLabel": "Línea", "fieldType": "dropdown", "requiredField": true,
+              "fieldOptions": { "values": [{ "option": "Perfiladora 1" }, { "option": "Perfiladora 2" }, { "option": "Cizalla" }] }
+            },
+            { "fieldName": "operario", "fieldLabel": "Operario", "fieldType": "text", "requiredField": true },
+            { "fieldName": "metros", "fieldLabel": "Metros producidos", "fieldType": "number", "requiredField": true },
+            { "fieldName": "objetivo", "fieldLabel": "Objetivo de metros del turno", "fieldType": "number", "requiredField": true },
+            { "fieldName": "parada_averia", "fieldLabel": "Minutos parada por avería", "fieldType": "number", "placeholder": "0" },
+            { "fieldName": "parada_cambio_formato", "fieldLabel": "Minutos parada por cambio de formato", "fieldType": "number", "placeholder": "0" },
+            { "fieldName": "parada_falta_material", "fieldLabel": "Minutos parada por falta de material", "fieldType": "number", "placeholder": "0" },
+            { "fieldName": "parada_otros", "fieldLabel": "Minutos parada por otros motivos", "fieldType": "number", "placeholder": "0" },
+            { "fieldName": "observaciones", "fieldLabel": "Observaciones", "fieldType": "textarea" }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "appendAttribution": false,
+          "buttonLabel": "Enviar informe"
+        }
+      }
+    },
+    {
+      "id": "6d1f0a52-1b8e-4c1e-9a10-000000000002",
+      "name": "Asegurar tabla",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [220, 0],
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "informes_turno",
+        "columns": {
+          "column": [
+            { "name": "fecha", "type": "string" },
+            { "name": "turno", "type": "string" },
+            { "name": "linea", "type": "string" },
+            { "name": "operario", "type": "string" },
+            { "name": "metros", "type": "number" },
+            { "name": "objetivo", "type": "number" },
+            { "name": "eficiencia", "type": "number" },
+            { "name": "parada_averia", "type": "number" },
+            { "name": "parada_cambio_formato", "type": "number" },
+            { "name": "parada_falta_material", "type": "number" },
+            { "name": "parada_otros", "type": "number" },
+            { "name": "paradas_total", "type": "number" },
+            { "name": "motivo_principal", "type": "string" },
+            { "name": "aviso", "type": "boolean" },
+            { "name": "observaciones", "type": "string" },
+            { "name": "registrado_en", "type": "string" }
+          ]
+        },
+        "options": { "createIfNotExists": true }
+      }
+    },
+    {
+      "id": "6d1f0a52-1b8e-4c1e-9a10-000000000003",
+      "name": "Calcular",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0],
+      "parameters": {
+        "jsCode": "// Valida el formulario y calcula eficiencia y paradas.\nconst f = $('Formulario').first().json;\n\nconst num = (v, campo) => {\n  const n = v === undefined || v === null || v === '' ? 0 : Number(v);\n  if (!Number.isFinite(n) || n < 0) throw new Error(`${campo}: tiene que ser un número igual o mayor que 0`);\n  return n;\n};\n\nconst metros = num(f.metros, 'Metros producidos');\nconst objetivo = num(f.objetivo, 'Objetivo');\nif (objetivo === 0) throw new Error('Objetivo: tiene que ser mayor que 0');\n\nconst paradas = {\n  'Avería': num(f.parada_averia, 'Parada por avería'),\n  'Cambio de formato': num(f.parada_cambio_formato, 'Parada por cambio de formato'),\n  'Falta de material': num(f.parada_falta_material, 'Parada por falta de material'),\n  'Otros': num(f.parada_otros, 'Parada por otros motivos'),\n};\nconst paradasTotal = Object.values(paradas).reduce((a, b) => a + b, 0);\nif (paradasTotal > 480) throw new Error('Las paradas suman más de 480 minutos: revisa los datos');\n\nconst [motivo, minutos] = Object.entries(paradas).sort((a, b) => b[1] - a[1])[0];\nconst eficiencia = Math.round((metros / objetivo) * 1000) / 10;\n\nreturn [{\n  json: {\n    fecha: String(f.fecha),\n    turno: f.turno,\n    linea: f.linea,\n    operario: String(f.operario).trim(),\n    metros,\n    objetivo,\n    eficiencia,\n    parada_averia: paradas['Avería'],\n    parada_cambio_formato: paradas['Cambio de formato'],\n    parada_falta_material: paradas['Falta de material'],\n    parada_otros: paradas['Otros'],\n    paradas_total: paradasTotal,\n    motivo_principal: minutos > 0 ? motivo : 'Sin paradas',\n    aviso: eficiencia < 80,\n    observaciones: f.observaciones ? String(f.observaciones).trim() : '',\n    registrado_en: $now.setZone('Europe/Madrid').toISO(),\n  },\n}];"
+      }
+    },
+    {
+      "id": "6d1f0a52-1b8e-4c1e-9a10-000000000004",
+      "name": "Guardar informe",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [660, 0],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": { "__rl": true, "mode": "name", "value": "informes_turno" },
+        "columns": { "mappingMode": "autoMapInputData", "value": {} },
+        "options": {}
+      }
+    },
+    {
+      "id": "6d1f0a52-1b8e-4c1e-9a10-000000000005",
+      "name": "Confirmación",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [880, 0],
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "Informe registrado",
+        "completionMessage": "={{ $('Calcular').first().json.linea }} · turno de {{ $('Calcular').first().json.turno.toLowerCase() }}: eficiencia {{ $('Calcular').first().json.eficiencia }} % y {{ $('Calcular').first().json.paradas_total }} min de parada.{{ $('Calcular').first().json.aviso ? ' Por debajo del 80 %: se avisará al responsable.' : '' }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Formulario": { "main": [[{ "node": "Asegurar tabla", "type": "main", "index": 0 }]] },
+    "Asegurar tabla": { "main": [[{ "node": "Calcular", "type": "main", "index": 0 }]] },
+    "Calcular": { "main": [[{ "node": "Guardar informe", "type": "main", "index": 0 }]] },
+    "Guardar informe": { "main": [[{ "node": "Confirmación", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {}
+}
