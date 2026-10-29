@@ -18,6 +18,14 @@
       }
     },
     {
+      "id": "7e2a1b63-2c9f-4d2f-8b21-000000000005",
+      "name": "Lanzar a mano",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 200],
+      "parameters": {}
+    },
+    {
       "id": "7e2a1b63-2c9f-4d2f-8b21-000000000002",
       "name": "Informes de ayer",
       "type": "n8n-nodes-base.dataTable",
@@ -72,6 +80,7 @@
   ],
   "connections": {
     "Cada día a las 07:00": { "main": [[{ "node": "Informes de ayer", "type": "main", "index": 0 }]] },
+    "Lanzar a mano": { "main": [[{ "node": "Informes de ayer", "type": "main", "index": 0 }]] },
     "Informes de ayer": { "main": [[{ "node": "Resumir", "type": "main", "index": 0 }]] },
     "Resumir": { "main": [[{ "node": "Enviar resumen diario", "type": "main", "index": 0 }]] }
   },
