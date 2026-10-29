@@ -10,8 +10,13 @@ enviar() {
   # avería, cambio de formato, falta de material, otros, observaciones.
   local args=() i=0
   for v in "$@"; do args+=(-F "field-$i=$v"); i=$((i + 1)); done
-  curl -fsS -X POST "${args[@]}" "$URL"
-  echo
+  local respuesta espera
+  respuesta=$(curl -fsS -X POST "${args[@]}" "$URL")
+  # Como el navegador: abre la página de confirmación y la confirma con un POST para cerrar la ejecución.
+  espera=$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['formWaitingUrl'])" "$respuesta")
+  espera="${URL%%/form/*}/form-waiting/${espera#*/form-waiting/}"
+  curl -fsS "$espera" | grep -oE 'eficiencia [^<]*' | head -1
+  curl -fsS -o /dev/null -X POST "$espera"
 }
 
 enviar "$HOY" "Mañana" "Perfiladora 1" "Prueba A" 4600 5000 10 25 0 5 "Prueba: turno normal"

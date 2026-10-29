@@ -6,7 +6,23 @@ Demo con datos inventados de líneas de perfilado metálico.
 
 ## Estado
 
-En construcción. Hecho: n8n desplegado en Docker. Pendiente: formulario, cálculos, avisos y publicación.
+En construcción. Ya funciona el formulario: calcula la eficiencia y las paradas y guarda cada informe en la tabla de datos `informes_turno` de n8n. Faltan los avisos, el resumen diario y la publicación del formulario.
+
+## Flujo "Informe de turno"
+
+Formulario → Asegurar tabla → Calcular → Guardar informe → Confirmación
+
+- **Formulario** (`/form/informe-turno`): fecha, turno, línea, operario, metros, objetivo, minutos de parada por motivo y observaciones.
+- **Asegurar tabla**: crea la tabla `informes_turno` si no existe, así el flujo funciona en una instalación nueva sin pasos a mano.
+- **Calcular**: valida los datos (números no negativos, objetivo mayor que 0, paradas de 480 min como máximo) y calcula la eficiencia (metros / objetivo), las paradas totales, el motivo principal y si hay aviso (eficiencia menor del 80 %).
+- **Confirmación**: el operario ve su eficiencia y sus minutos de parada.
+
+## Cargar y probar los flujos
+
+```bash
+bash scripts/importar-flujos.sh     # importa workflows/*.json, los publica y reinicia n8n
+bash scripts/probar-formulario.sh   # envía 3 informes de prueba (92, 85 y 71 %)
+```
 
 ## Instalación
 
