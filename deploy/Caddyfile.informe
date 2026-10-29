@@ -1,0 +1,23 @@
+# Bloque para /etc/caddy/Caddyfile: publica solo el formulario. El editor y la API de n8n no salen a internet.
+informe.kavanasystems.com {
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	@formulario path /form/* /form-waiting/*
+	handle @formulario {
+		reverse_proxy 127.0.0.1:5678
+	}
+
+	handle / {
+		redir /form/informe-turno 302
+	}
+
+	handle {
+		respond "No encontrado" 404
+	}
+}

@@ -15,7 +15,10 @@ services:
       N8N_PORT: "5678"
       N8N_HOST: ${N8N_HOST:-localhost}
       N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
-      WEBHOOK_URL: ${WEBHOOK_URL:-http://localhost:5678/}
+      # Base pública del formulario (F4). El editor sigue en http://localhost:5678 por túnel.
+      N8N_WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      # Caddy delante: n8n lee la IP real del cliente de X-Forwarded-For.
+      N8N_PROXY_HOPS: "1"
       # El editor va por túnel a http://localhost, así que la cookie no puede exigir HTTPS.
       N8N_SECURE_COOKIE: "false"
       N8N_DIAGNOSTICS_ENABLED: "false"
