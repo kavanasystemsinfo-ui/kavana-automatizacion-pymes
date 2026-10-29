@@ -1,0 +1,79 @@
+{
+  "id": "InfTurnoDiario01",
+  "name": "Resumen diario de turnos",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid"
+  },
+  "nodes": [
+    {
+      "id": "7e2a1b63-2c9f-4d2f-8b21-000000000001",
+      "name": "Cada día a las 07:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "parameters": {
+        "rule": { "interval": [{ "field": "days", "triggerAtHour": 7, "triggerAtMinute": 0 }] }
+      }
+    },
+    {
+      "id": "7e2a1b63-2c9f-4d2f-8b21-000000000002",
+      "name": "Informes de ayer",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [220, 0],
+      "alwaysOutputData": true,
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": { "__rl": true, "mode": "name", "value": "informes_turno" },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "fecha",
+              "condition": "eq",
+              "keyValue": "={{ $now.setZone('Europe/Madrid').minus({ days: 1 }).toFormat('yyyy-MM-dd') }}"
+            }
+          ]
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "7e2a1b63-2c9f-4d2f-8b21-000000000003",
+      "name": "Resumir",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0],
+      "parameters": {
+        "jsCode": "// Agrega los informes de ayer por línea y arma el correo del resumen diario.\nconst ayer = $now.setZone('Europe/Madrid').minus({ days: 1 }).toFormat('yyyy-MM-dd');\nconst filas = $input.all().map((i) => i.json).filter((r) => r.linea);\nconst esc = (s) => String(s ?? '').replace(/[&<>\"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[ch]));\nconst pct = (n) => `${String(Math.round(n * 10) / 10).replace('.', ',')} %`;\nconst fmt = (n) => Number(n).toLocaleString('es-ES');\n\nif (filas.length === 0) {\n  return [{ json: {\n    asunto: `Resumen de turnos ${ayer}: sin informes`,\n    html: `<p style=\"font-family:Arial,sans-serif\">Ayer (${ayer}) no se registró ningún informe de turno. Revisa si los operarios rellenaron el formulario.</p>`,\n  } }];\n}\n\nconst lineas = {};\nfor (const r of filas) {\n  const l = (lineas[r.linea] ??= { metros: 0, objetivo: 0, turnos: 0, avisos: 0, paradas: 0 });\n  l.metros += Number(r.metros);\n  l.objetivo += Number(r.objetivo);\n  l.turnos += 1;\n  l.avisos += r.aviso ? 1 : 0;\n  l.paradas += Number(r.paradas_total);\n}\nconst totalMetros = filas.reduce((a, r) => a + Number(r.metros), 0);\nconst totalObjetivo = filas.reduce((a, r) => a + Number(r.objetivo), 0);\nconst eficiencia = (totalMetros / totalObjetivo) * 100;\nconst avisos = filas.filter((r) => r.aviso).length;\n\nconst motivos = { parada_averia: 'Avería', parada_cambio_formato: 'Cambio de formato', parada_falta_material: 'Falta de material', parada_otros: 'Otros' };\nconst paradas = filas.flatMap((r) => Object.entries(motivos).map(([k, nombre]) => ({ linea: r.linea, turno: r.turno, nombre, min: Number(r[k]) })))\n  .filter((p) => p.min > 0)\n  .sort((a, b) => b.min - a.min)\n  .slice(0, 3);\n\nconst td = 'style=\"padding:4px 10px;border-bottom:1px solid #eee\"';\nconst filasLinea = Object.entries(lineas).sort().map(([nombre, l]) => {\n  const ef = (l.metros / l.objetivo) * 100;\n  return `<tr><td ${td}>${esc(nombre)}</td><td ${td}>${l.turnos}</td><td ${td}>${fmt(l.metros)}</td><td style=\"padding:4px 10px;border-bottom:1px solid #eee;color:${ef < 80 ? '#b42318' : '#067647'}\"><b>${pct(ef)}</b></td><td ${td}>${l.paradas} min</td><td ${td}>${l.avisos}</td></tr>`;\n}).join('\\n');\n\nconst html = `<div style=\"font-family:Arial,sans-serif;font-size:14px;color:#222\">\n<p>Resumen de los turnos de ayer, <b>${ayer}</b>: ${filas.length} informes, eficiencia global <b>${pct(eficiencia)}</b>, ${avisos} ${avisos === 1 ? 'turno' : 'turnos'} por debajo del 80 %.</p>\n<table style=\"border-collapse:collapse\">\n<tr style=\"text-align:left;color:#555\"><th ${td}>Línea</th><th ${td}>Turnos</th><th ${td}>Metros</th><th ${td}>Eficiencia</th><th ${td}>Paradas</th><th ${td}>Avisos</th></tr>\n${filasLinea}\n</table>\n<p style=\"margin-top:16px\"><b>Paradas más largas</b></p>\n<ol>${paradas.map((p) => `<li>${esc(p.linea)} · turno de ${esc(p.turno).toLowerCase()}: ${esc(p.nombre)}, ${p.min} min</li>`).join('')}</ol>\n<p style=\"color:#888;font-size:12px\">Informe de turno automático · n8n</p>\n</div>`;\n\nreturn [{ json: {\n  asunto: `${avisos ? '⚠ ' : ''}Resumen de turnos ${ayer}: ${pct(eficiencia)}${avisos ? ` · ${avisos} con aviso` : ''}`,\n  html,\n} }];"
+      }
+    },
+    {
+      "id": "7e2a1b63-2c9f-4d2f-8b21-000000000004",
+      "name": "Enviar resumen diario",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [660, 0],
+      "credentials": {
+        "smtp": { "id": "__SMTP_ID__", "name": "SMTP Gmail Kavana" }
+      },
+      "parameters": {
+        "fromEmail": "Informe de turno <kavanasystems.info@gmail.com>",
+        "toEmail": "kavanasystems.info@gmail.com",
+        "subject": "={{ $json.asunto }}",
+        "emailFormat": "html",
+        "html": "={{ $json.html }}",
+        "options": { "appendAttribution": false }
+      }
+    }
+  ],
+  "connections": {
+    "Cada día a las 07:00": { "main": [[{ "node": "Informes de ayer", "type": "main", "index": 0 }]] },
+    "Informes de ayer": { "main": [[{ "node": "Resumir", "type": "main", "index": 0 }]] },
+    "Resumir": { "main": [[{ "node": "Enviar resumen diario", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {}
+}

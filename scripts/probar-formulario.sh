@@ -3,7 +3,8 @@
 # Uso en el VPS: bash scripts/probar-formulario.sh [url]  (por defecto, el n8n local)
 set -euo pipefail
 URL="${1:-http://127.0.0.1:5678/form/informe-turno}"
-HOY=$(TZ=Europe/Madrid date +%F)
+# FECHA permite probar el resumen diario: FECHA=$(TZ=Europe/Madrid date -d yesterday +%F) bash scripts/probar-formulario.sh
+HOY="${FECHA:-$(TZ=Europe/Madrid date +%F)}"
 
 enviar() {
   # Orden de los campos: fecha, turno, línea, operario, metros, objetivo,
