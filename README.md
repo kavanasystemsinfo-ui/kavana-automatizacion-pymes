@@ -6,7 +6,21 @@ Demo con datos inventados de líneas de perfilado metálico.
 
 ## Estado
 
-En construcción. Ya funcionan el formulario, el correo de cada turno (con aviso si la eficiencia baja del 80 %) y el resumen diario de las 07:00. Falta publicar el formulario en internet.
+Funciona en producción: formulario público en https://informe.kavanasystems.com, correo por turno con aviso si la eficiencia baja del 80 % y resumen diario a las 07:00. Pendiente: datos de demo y capturas.
+
+## Publicación
+
+Solo el formulario sale a internet. Caddy publica `/form/*` y `/form-waiting/*`, manda la raíz al formulario y devuelve 404 para todo lo demás, editor y API incluidos (`deploy/Caddyfile.informe`). n8n sigue escuchando solo en `127.0.0.1` y genera los enlaces públicos con `N8N_WEBHOOK_URL`.
+
+Para añadir el bloque a Caddy sin cortar el servicio:
+
+```bash
+cat deploy/Caddyfile.informe >> /etc/caddy/Caddyfile
+caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile --address localhost:2019
+```
+
+El formulario es abierto: cualquiera con el enlace puede enviar un informe. Si hiciera falta cerrarlo, el Form Trigger admite autenticación básica.
 
 ## Correo
 
