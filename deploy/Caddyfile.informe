@@ -1,4 +1,8 @@
-# Bloque para /etc/caddy/Caddyfile: publica solo el formulario. El editor y la API de n8n no salen a internet.
+# Bloque para /etc/caddy/Caddyfile. Publica solo:
+#   - el formulario de uso real (/form/*)
+#   - el panel de la demo (/demo/, archivos estáticos de /var/www/informe-demo)
+#   - las dos rutas de la API de la demo (/webhook/demo-api/informes e /informe)
+# El editor de n8n, el resto de webhooks (incluido /webhook/demo-seed) y la API interna no salen a internet.
 informe.kavanasystems.com {
 	encode gzip
 	header {
@@ -13,9 +17,27 @@ informe.kavanasystems.com {
 		reverse_proxy 127.0.0.1:5678
 	}
 
+	handle /demo {
+		redir * /demo/ 308
+	}
+
+	handle /demo/* {
+		uri strip_prefix /demo
+		root * /var/www/informe-demo
+		file_server
+	}
+
+	@api path /webhook/demo-api/informes /webhook/demo-api/informe
+	handle @api {
+		request_body {
+			max_size 4KB
+		}
+		reverse_proxy 127.0.0.1:5678
+	}
+
 	handle / {
 		# El * hace falta: sin él, Caddy toma la primera ruta como filtro y no como destino.
-		redir * /form/informe-turno 302
+		redir * /demo/ 302
 	}
 
 	handle {

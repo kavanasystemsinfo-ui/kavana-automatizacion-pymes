@@ -1,0 +1,463 @@
+{
+  "id": "InfTurnoDemoMant1",
+  "name": "Demo pública · mantenimiento",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid"
+  },
+  "nodes": [
+    {
+      "id": "1b4ae6b2-9c60-56d1-a790-0f40cdeaf370",
+      "name": "Cada hora",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "0d50c767-a44e-5781-844c-0dc2462f31a5",
+      "name": "Asegurar tabla (purga)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "informes_demo",
+        "columns": {
+          "column": [
+            {
+              "name": "sid",
+              "type": "string"
+            },
+            {
+              "name": "fecha",
+              "type": "string"
+            },
+            {
+              "name": "turno",
+              "type": "string"
+            },
+            {
+              "name": "linea",
+              "type": "string"
+            },
+            {
+              "name": "operario",
+              "type": "string"
+            },
+            {
+              "name": "metros",
+              "type": "number"
+            },
+            {
+              "name": "objetivo",
+              "type": "number"
+            },
+            {
+              "name": "eficiencia",
+              "type": "number"
+            },
+            {
+              "name": "parada_averia",
+              "type": "number"
+            },
+            {
+              "name": "parada_cambio_formato",
+              "type": "number"
+            },
+            {
+              "name": "parada_falta_material",
+              "type": "number"
+            },
+            {
+              "name": "parada_otros",
+              "type": "number"
+            },
+            {
+              "name": "paradas_total",
+              "type": "number"
+            },
+            {
+              "name": "motivo_principal",
+              "type": "string"
+            },
+            {
+              "name": "aviso",
+              "type": "boolean"
+            },
+            {
+              "name": "observaciones",
+              "type": "string"
+            },
+            {
+              "name": "registrado_en",
+              "type": "string"
+            },
+            {
+              "name": "creado_ms",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      }
+    },
+    {
+      "id": "df6f6b80-f8fd-573c-8739-70d884ad23d6",
+      "name": "Borrar informes de más de 24 h",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "informes_demo"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "sid",
+              "condition": "neq",
+              "keyValue": "demo"
+            },
+            {
+              "keyName": "creado_ms",
+              "condition": "lt",
+              "keyValue": "={{ Date.now() - 24 * 3600 * 1000 }}"
+            }
+          ]
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "166c5647-0fa4-564e-b162-873d35eac4e5",
+      "name": "Sembrar (solo interno)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "demo-seed",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "webhookId": "e3bd7c22-1b26-5745-a7f4-9502b81cf3af"
+    },
+    {
+      "id": "fcf7c686-afd8-5ea0-ae7f-3b059c44fa87",
+      "name": "Cada noche a las 03:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        460
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 3,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "e6f82d3c-d40b-58dc-91e9-4174e2cbd5d0",
+      "name": "Asegurar tabla (semilla)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        380
+      ],
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "informes_demo",
+        "columns": {
+          "column": [
+            {
+              "name": "sid",
+              "type": "string"
+            },
+            {
+              "name": "fecha",
+              "type": "string"
+            },
+            {
+              "name": "turno",
+              "type": "string"
+            },
+            {
+              "name": "linea",
+              "type": "string"
+            },
+            {
+              "name": "operario",
+              "type": "string"
+            },
+            {
+              "name": "metros",
+              "type": "number"
+            },
+            {
+              "name": "objetivo",
+              "type": "number"
+            },
+            {
+              "name": "eficiencia",
+              "type": "number"
+            },
+            {
+              "name": "parada_averia",
+              "type": "number"
+            },
+            {
+              "name": "parada_cambio_formato",
+              "type": "number"
+            },
+            {
+              "name": "parada_falta_material",
+              "type": "number"
+            },
+            {
+              "name": "parada_otros",
+              "type": "number"
+            },
+            {
+              "name": "paradas_total",
+              "type": "number"
+            },
+            {
+              "name": "motivo_principal",
+              "type": "string"
+            },
+            {
+              "name": "aviso",
+              "type": "boolean"
+            },
+            {
+              "name": "observaciones",
+              "type": "string"
+            },
+            {
+              "name": "registrado_en",
+              "type": "string"
+            },
+            {
+              "name": "creado_ms",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      }
+    },
+    {
+      "id": "d05f24ab-8db7-591b-95fd-8eb0aa311322",
+      "name": "Borrar la demo anterior",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        380
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "informes_demo"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "sid",
+              "condition": "eq",
+              "keyValue": "demo"
+            }
+          ]
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "fcf7532a-1e3a-5266-9a25-9f8efda56914",
+      "name": "Generar semilla",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        380
+      ],
+      "parameters": {
+        "jsCode": "\n// Un mes de informes inventados (de hace 30 días a ayer), siempre iguales para una misma fecha.\nconst rng = (semilla) => () => {\n  semilla = (semilla + 0x6D2B79F5) | 0;\n  let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);\n  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;\n  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;\n};\nconst hoy = $now.setZone('Europe/Madrid').startOf('day');\nconst LINEAS = [\n  { n: 'Perfiladora 1', obj: 5000, ops: ['Marta Soler', 'Iván Ruiz', 'Carlos Vidal'], formato: 0.25 },\n  { n: 'Perfiladora 2', obj: 4000, ops: ['Laura Gómez', 'Raúl Peña', 'Sergio Mata'], formato: 0.5 },\n  { n: 'Cizalla', obj: 4000, ops: ['Nuria Ferrer', 'Hugo Ortiz', 'Pablo Cano'], formato: 0.15 },\n];\nconst TURNOS = [['Mañana', 14], ['Tarde', 22], ['Noche', 6]];\nconst entre = (r, a, b) => Math.round(a + r() * (b - a));\nconst OBS = {\n  'Avería': ['Avería en el motor principal; avisado mantenimiento.', 'Rodamiento del rodillo caliente; se cambia en el siguiente paro.', 'Fallo de sensor de final de carrera.'],\n  'Cambio de formato': ['Dos cambios de formato por pedidos pequeños.', 'Cambio de formato más largo de lo previsto.'],\n  'Falta de material': ['Llegó tarde la bobina del pedido urgente.', 'Se acabó la bobina y hubo que esperar la siguiente.'],\n  'Otros': ['Parada breve por limpieza de la línea.', 'Reunión de seguridad al inicio del turno.'],\n};\n\nconst filas = [];\nfor (let dia = 30; dia >= 1; dia--) {\n  const dt = hoy.minus({ days: dia });\n  if (dt.weekday === 7) continue;\n  LINEAS.forEach((l, li) => {\n    TURNOS.forEach(([turno, horaFin], ti) => {\n      if (dt.weekday === 6 && turno === 'Noche') return;\n      const r = rng(dia * 977 + li * 131 + ti * 17 + 12345);\n      // Historia: una racha de averías en la cizalla de noche y de tarde hace dos semanas.\n      const racha = l.n === 'Cizalla' && dia >= 12 && dia <= 16 && turno !== 'Mañana';\n      const averia = racha ? entre(r, 55, 110) : (r() < 0.12 ? entre(r, 15, 50) : 0);\n      const formato = r() < l.formato ? entre(r, 12, 40) : 0;\n      const material = r() < (turno === 'Tarde' ? 0.16 : 0.08) ? entre(r, 10, 40) : 0;\n      const otros = r() < 0.15 ? entre(r, 5, 20) : 0;\n      const total = averia + formato + material + otros;\n      let metros = Math.round(l.obj * (1 - (total / 480) * 1.6) * (0.9 + r() * 0.1));\n      metros = Math.max(0, Math.min(metros, Math.round(l.obj * 1.03)));\n      const eficiencia = Math.round((metros / l.obj) * 1000) / 10;\n      const paradas = { 'Avería': averia, 'Cambio de formato': formato, 'Falta de material': material, 'Otros': otros };\n      const [motivo, minutos] = Object.entries(paradas).sort((a, b) => b[1] - a[1])[0];\n      const opciones = OBS[motivo];\n      filas.push({ json: {\n        sid: 'demo', fecha: dt.toFormat('yyyy-MM-dd'), turno, linea: l.n, operario: l.ops[ti],\n        metros, objetivo: l.obj, eficiencia,\n        parada_averia: averia, parada_cambio_formato: formato, parada_falta_material: material, parada_otros: otros,\n        paradas_total: total, motivo_principal: minutos > 0 ? motivo : 'Sin paradas',\n        aviso: eficiencia < 80,\n        observaciones: minutos >= 25 ? opciones[entre(r, 0, opciones.length - 1)] : '',\n        registrado_en: dt.set({ hour: horaFin, minute: entre(r, 0, 20) }).toISO(),\n        creado_ms: 0,\n      } });\n    });\n  });\n}\nreturn filas;\n"
+      }
+    },
+    {
+      "id": "19c1a25e-1637-5f2f-92d3-03deb8b5e47a",
+      "name": "Guardar semilla",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        380
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "informes_demo"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "81787ea4-0d59-5fc2-a352-f65bcaaf9f5c",
+      "name": "Resumen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        380
+      ],
+      "parameters": {
+        "jsCode": "\nreturn [{ json: { sembradas: $('Generar semilla').all().length } }];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Cada hora": {
+      "main": [
+        [
+          {
+            "node": "Asegurar tabla (purga)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar tabla (purga)": {
+      "main": [
+        [
+          {
+            "node": "Borrar informes de más de 24 h",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sembrar (solo interno)": {
+      "main": [
+        [
+          {
+            "node": "Asegurar tabla (semilla)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cada noche a las 03:00": {
+      "main": [
+        [
+          {
+            "node": "Asegurar tabla (semilla)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar tabla (semilla)": {
+      "main": [
+        [
+          {
+            "node": "Borrar la demo anterior",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Borrar la demo anterior": {
+      "main": [
+        [
+          {
+            "node": "Generar semilla",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar semilla": {
+      "main": [
+        [
+          {
+            "node": "Guardar semilla",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar semilla": {
+      "main": [
+        [
+          {
+            "node": "Resumen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}

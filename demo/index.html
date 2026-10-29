@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Informe de turno · demo</title>
+<meta name="description" content="Demo del informe de turno automático: panel con un mes de datos inventados y un espacio privado para probarlo.">
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --text: #1d2430; --muted: #5b6676; --line: #e3e6ec;
+    --accent: #1f5fbf; --accent-text: #fff; --ok: #067647; --ok-bg: #e7f6ee;
+    --bad: #b42318; --bad-bg: #fdecea; --bar: #7da4dd; --own: #fff7e0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12161c; --card: #1a2029; --text: #e8ecf2; --muted: #9aa5b5; --line: #2b3441;
+      --accent: #6ea2f0; --accent-text: #0d1522; --ok: #5fd39a; --ok-bg: #12301f;
+      --bad: #ff8a80; --bad-bg: #3a1815; --bar: #3d669f; --own: #332b12;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 56px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  p { margin: 0 0 8px; }
+  .muted { color: var(--muted); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .intro { margin-bottom: 16px; }
+  .aviso-demo { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: var(--card); border: 1px solid var(--line); font-size: 14px; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .kpi .valor { font-size: 28px; font-weight: 700; line-height: 1.2; }
+  .kpi .etiqueta { color: var(--muted); font-size: 13px; }
+  .kpi.mal .valor { color: var(--bad); }
+  .rejilla { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .filtros { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .filtros button, .filtros select { font: inherit; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--text); cursor: pointer; }
+  .filtros button[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .tabla { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.propio td { background: var(--own); }
+  .etq { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .etq.ok { background: var(--ok-bg); color: var(--ok); }
+  .etq.mal { background: var(--bad-bg); color: var(--bad); }
+  .etq.tu { background: var(--accent); color: var(--accent-text); }
+  .barras .fila { display: grid; grid-template-columns: 130px 1fr 56px; gap: 8px; align-items: center; margin-bottom: 8px; font-size: 14px; }
+  .barras .pista { background: var(--line); border-radius: 6px; height: 12px; overflow: hidden; }
+  .barras .relleno { background: var(--bar); height: 100%; }
+  form { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+  input, select, textarea { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; }
+  textarea { resize: vertical; min-height: 40px; }
+  form .ancho { grid-column: 1 / -1; }
+  button.enviar { font: inherit; font-weight: 600; padding: 10px 18px; border-radius: 8px; border: 0; background: var(--accent); color: var(--accent-text); cursor: pointer; }
+  button.enviar[disabled] { opacity: .6; cursor: wait; }
+  .resultado { margin-top: 12px; padding: 12px; border-radius: 8px; }
+  .resultado.ok { background: var(--ok-bg); color: var(--ok); }
+  .resultado.mal { background: var(--bad-bg); color: var(--bad); }
+  .resultado .grande { font-size: 24px; font-weight: 700; }
+  .pie { margin-top: 24px; font-size: 13px; color: var(--muted); }
+  svg text { fill: var(--muted); font-size: 11px; }
+  @media (max-width: 760px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .rejilla { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header class="intro">
+    <h1>Informe de turno automático</h1>
+    <p class="muted">Al acabar el turno, el operario rellena un formulario en el móvil. n8n calcula la eficiencia y las paradas, lo guarda y, si la eficiencia baja del 80 %, avisa al responsable. Este panel lee esos informes.</p>
+    <p class="aviso-demo"><b>Demo con datos inventados.</b> Los informes de ejemplo no se pueden modificar. Lo que envíes aquí abajo solo lo ves tú, en este navegador, y se borra a las 24 horas. No se envía ningún correo.</p>
+  </header>
+
+  <section class="kpis" aria-label="Resumen" id="kpis"></section>
+
+  <section class="rejilla">
+    <div class="card">
+      <h2>Eficiencia diaria <span class="muted" id="rango"></span></h2>
+      <div id="grafico" role="img" aria-label="Eficiencia media por día"></div>
+    </div>
+    <div class="card">
+      <h2>Minutos de parada por motivo</h2>
+      <div class="barras" id="paradas"></div>
+    </div>
+  </section>
+
+  <section class="card" style="margin-bottom:16px">
+    <h2>Prueba el sistema</h2>
+    <form id="formulario" novalidate>
+      <label>Fecha<input type="date" name="fecha" required></label>
+      <label>Turno<select name="turno"><option>Mañana</option><option>Tarde</option><option>Noche</option></select></label>
+      <label>Línea<select name="linea"><option>Perfiladora 1</option><option>Perfiladora 2</option><option>Cizalla</option></select></label>
+      <label>Operario<input name="operario" maxlength="40" value="Tu nombre" required></label>
+      <label>Metros producidos<input type="number" name="metros" min="0" step="1" value="3200" required></label>
+      <label>Objetivo del turno (m)<input type="number" name="objetivo" min="1" step="1" value="5000" required></label>
+      <label>Parada: avería (min)<input type="number" name="parada_averia" min="0" value="45"></label>
+      <label>Parada: cambio de formato (min)<input type="number" name="parada_cambio_formato" min="0" value="20"></label>
+      <label>Parada: falta de material (min)<input type="number" name="parada_falta_material" min="0" value="0"></label>
+      <label>Parada: otros (min)<input type="number" name="parada_otros" min="0" value="0"></label>
+      <label class="ancho">Observaciones<textarea name="observaciones" maxlength="200" rows="2"></textarea></label>
+      <div class="ancho"><button class="enviar" type="submit" id="enviar">Enviar informe</button></div>
+    </form>
+    <div id="resultado" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>Informes</h2>
+    <div class="filtros" id="filtros">
+      <button type="button" data-v="todos" aria-pressed="true">Todos</button>
+      <button type="button" data-v="demo" aria-pressed="false">Solo la demo</button>
+      <button type="button" data-v="propios" aria-pressed="false">Mis informes</button>
+      <select id="linea-filtro" aria-label="Filtrar por línea">
+        <option value="">Todas las líneas</option><option>Perfiladora 1</option><option>Perfiladora 2</option><option>Cizalla</option>
+      </select>
+      <button type="button" data-v="avisos" aria-pressed="false">Solo avisos (&lt; 80 %)</button>
+    </div>
+    <div class="tabla"><table>
+      <thead><tr><th>Fecha</th><th>Turno</th><th>Línea</th><th>Operario</th><th class="num">Metros</th><th class="num">Eficiencia</th><th class="num">Paradas</th><th>Motivo principal</th><th></th></tr></thead>
+      <tbody id="filas"></tbody>
+    </table></div>
+    <p class="muted" id="pie-tabla" style="margin-top:8px"></p>
+  </section>
+
+  <p class="pie">Construido con n8n autoalojado. El panel y el formulario de esta página hablan con dos rutas públicas del flujo "Demo pública · API". Tu espacio es privado porque nadie puede adivinar el identificador aleatorio que guarda tu navegador; no hay cuentas ni inicio de sesión.</p>
+</main>
+
+<script>
+const API = '/webhook/demo-api';
+const NF = new Intl.NumberFormat('es-ES');
+const ESC = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pct = (n) => (Math.round(n * 10) / 10).toLocaleString('es-ES') + ' %';
+
+function sesion() {
+  let sid = null;
+  try { sid = localStorage.getItem('informe-demo-sid'); } catch (e) {}
+  if (!/^[a-f0-9]{32}$/.test(sid || '')) {
+    const b = new Uint8Array(16);
+    crypto.getRandomValues(b);
+    sid = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+    try { localStorage.setItem('informe-demo-sid', sid); } catch (e) {}
+  }
+  return sid;
+}
+const SID = sesion();
+
+let filas = [];
+let filtro = 'todos';
+let linea = '';
+
+async function cargar() {
+  const r = await fetch(`${API}/informes?sid=${SID}`, { cache: 'no-store' });
+  if (!r.ok) throw new Error('No se pudo leer la demo');
+  filas = (await r.json()).filas || [];
+  pintar();
+}
+
+function visibles() {
+  return filas.filter((f) =>
+    (filtro !== 'demo' || !f.propio) && (filtro !== 'propios' || f.propio) && (filtro !== 'avisos' || f.aviso) &&
+    (!linea || f.linea === linea));
+}
+
+function pintar() {
+  const base = filas.filter((f) => !linea || f.linea === linea);
+  const n = base.length;
+  const media = n ? base.reduce((a, f) => a + f.eficiencia, 0) / n : 0;
+  const avisos = base.filter((f) => f.aviso).length;
+  const paradas = base.reduce((a, f) => a + f.paradas_total, 0);
+  document.getElementById('kpis').innerHTML = [
+    ['Eficiencia media', n ? pct(media) : '–', media < 80 && n ? 'mal' : ''],
+    ['Informes', NF.format(n), ''],
+    ['Avisos (< 80 %)', NF.format(avisos), avisos ? 'mal' : ''],
+    ['Minutos de parada', NF.format(paradas), ''],
+  ].map(([e, v, c]) => `<div class="card kpi ${c}"><div class="valor">${v}</div><div class="etiqueta">${e}</div></div>`).join('');
+
+  grafico(base);
+  barrasParadas(base);
+
+  const v = visibles();
+  document.getElementById('filas').innerHTML = v.slice(0, 60).map((f) => `
+    <tr class="${f.propio ? 'propio' : ''}">
+      <td>${ESC(f.fecha)}</td><td>${ESC(f.turno)}</td><td>${ESC(f.linea)}</td><td>${ESC(f.operario)}${f.propio ? ' <span class="etq tu">tú</span>' : ''}</td>
+      <td class="num">${NF.format(f.metros)} / ${NF.format(f.objetivo)}</td>
+      <td class="num"><span class="etq ${f.aviso ? 'mal' : 'ok'}">${pct(f.eficiencia)}</span></td>
+      <td class="num">${f.paradas_total} min</td><td>${ESC(f.motivo_principal)}</td>
+      <td class="muted" title="${ESC(f.observaciones)}">${f.observaciones ? 'ver nota' : ''}</td>
+    </tr>`).join('') || '<tr><td colspan="9" class="muted">Sin informes con este filtro.</td></tr>';
+  document.getElementById('pie-tabla').textContent = v.length > 60 ? `Se muestran los 60 más recientes de ${v.length}.` : `${v.length} informes.`;
+}
+
+function grafico(base) {
+  const porDia = {};
+  base.forEach((f) => { (porDia[f.fecha] ||= []).push(f.eficiencia); });
+  const dias = Object.keys(porDia).sort();
+  const el = document.getElementById('grafico');
+  document.getElementById('rango').textContent = dias.length ? `· ${dias[0]} a ${dias[dias.length - 1]}` : '';
+  if (!dias.length) { el.innerHTML = '<p class="muted">Sin datos.</p>'; return; }
+  const W = 640, H = 200, m = { l: 34, r: 8, t: 8, b: 22 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b, bw = iw / dias.length;
+  const y = (v) => m.t + ih - (Math.min(v, 110) / 110) * ih;
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="presentation">`;
+  [0, 50, 80, 100].forEach((t) => {
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(t)}" y2="${y(t)}" ${t === 80 ? 'stroke="var(--bad)" stroke-dasharray="4 3"' : 'stroke="var(--line)"'}/>`;
+    s += `<text x="${m.l - 4}" y="${y(t) + 4}" text-anchor="end">${t}</text>`;
+  });
+  dias.forEach((d, i) => {
+    const v = porDia[d].reduce((a, b) => a + b, 0) / porDia[d].length;
+    const x = m.l + i * bw + bw * 0.15;
+    s += `<rect x="${x}" y="${y(v)}" width="${bw * 0.7}" height="${m.t + ih - y(v)}" rx="2" fill="${v < 80 ? 'var(--bad)' : 'var(--bar)'}"><title>${d}: ${pct(v)}</title></rect>`;
+  });
+  s += `<text x="${m.l}" y="${H - 6}">${dias[0].slice(5)}</text><text x="${W - m.r}" y="${H - 6}" text-anchor="end">${dias[dias.length - 1].slice(5)}</text>`;
+  el.innerHTML = s + '</svg>';
+}
+
+function barrasParadas(base) {
+  const t = { 'Avería': 0, 'Cambio de formato': 0, 'Falta de material': 0, 'Otros': 0 };
+  base.forEach((f) => {
+    t['Avería'] += f.parada_averia; t['Cambio de formato'] += f.parada_cambio_formato;
+    t['Falta de material'] += f.parada_falta_material; t['Otros'] += f.parada_otros;
+  });
+  const max = Math.max(1, ...Object.values(t));
+  document.getElementById('paradas').innerHTML = Object.entries(t).map(([k, v]) =>
+    `<div class="fila"><span>${k}</span><div class="pista"><div class="relleno" style="width:${(v / max) * 100}%"></div></div><span class="muted" style="text-align:right">${NF.format(v)}</span></div>`).join('');
+}
+
+document.getElementById('filtros').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-v]');
+  if (!b) return;
+  const v = b.dataset.v;
+  if (v === 'avisos') { filtro = filtro === 'avisos' ? 'todos' : 'avisos'; }
+  else { filtro = v; }
+  document.querySelectorAll('#filtros button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.v === filtro)));
+  pintar();
+});
+document.getElementById('linea-filtro').addEventListener('change', (e) => { linea = e.target.value; pintar(); });
+
+const form = document.getElementById('formulario');
+form.fecha.value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const OBJETIVO = { 'Perfiladora 1': 5000, 'Perfiladora 2': 4000, 'Cizalla': 4000 };
+form.linea.addEventListener('change', () => { form.objetivo.value = OBJETIVO[form.linea.value]; });
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const out = document.getElementById('resultado');
+  const btn = document.getElementById('enviar');
+  const datos = Object.fromEntries(new FormData(form).entries());
+  datos.sid = SID;
+  btn.disabled = true; out.className = 'resultado'; out.textContent = 'Enviando…';
+  try {
+    const r = await fetch(`${API}/informe`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok) { out.className = 'resultado mal'; out.textContent = j.error || 'No se pudo guardar el informe.'; return; }
+    const i = j.informe;
+    out.className = 'resultado ' + (i.aviso ? 'mal' : 'ok');
+    out.innerHTML = `<div class="grande">${pct(i.eficiencia)} de eficiencia</div>
+      <div>${ESC(i.linea)} · turno de ${ESC(i.turno.toLowerCase())}: ${NF.format(i.metros)} de ${NF.format(i.objetivo)} m y ${i.paradas_total} min de parada (principal: ${ESC(i.motivo_principal)}).</div>
+      <div>${i.aviso ? '<b>Por debajo del 80 %.</b> En producción, aquí saldría un correo de aviso al responsable con el motivo principal.' : 'En producción, el responsable recibiría el resumen del turno por correo.'} Tu informe ya aparece abajo, marcado como tuyo.</div>`;
+    filtro = 'propios';
+    document.querySelectorAll('#filtros button').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.v === filtro)));
+    await cargar();
+  } catch (err) {
+    out.className = 'resultado mal'; out.textContent = 'No hay conexión con la demo. Inténtalo de nuevo.';
+  } finally { btn.disabled = false; }
+});
+
+cargar().catch(() => { document.getElementById('filas').innerHTML = '<tr><td colspan="9" class="muted">No se pudo cargar la demo.</td></tr>'; });
+</script>
+</body>
+</html>

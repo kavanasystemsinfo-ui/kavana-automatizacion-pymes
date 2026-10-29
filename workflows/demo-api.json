@@ -1,0 +1,603 @@
+{
+  "id": "InfTurnoDemoApi1",
+  "name": "Demo pública · API",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid"
+  },
+  "nodes": [
+    {
+      "id": "0983a934-8566-5416-ae13-9e5f3045ec8f",
+      "name": "Listar",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "demo-api/informes",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "4efaae2e-6a44-5bce-8c18-5e98a30886ec"
+    },
+    {
+      "id": "d0fb4e68-8c5b-5f67-909b-633619fd5d0b",
+      "name": "Asegurar tabla (listar)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "informes_demo",
+        "columns": {
+          "column": [
+            {
+              "name": "sid",
+              "type": "string"
+            },
+            {
+              "name": "fecha",
+              "type": "string"
+            },
+            {
+              "name": "turno",
+              "type": "string"
+            },
+            {
+              "name": "linea",
+              "type": "string"
+            },
+            {
+              "name": "operario",
+              "type": "string"
+            },
+            {
+              "name": "metros",
+              "type": "number"
+            },
+            {
+              "name": "objetivo",
+              "type": "number"
+            },
+            {
+              "name": "eficiencia",
+              "type": "number"
+            },
+            {
+              "name": "parada_averia",
+              "type": "number"
+            },
+            {
+              "name": "parada_cambio_formato",
+              "type": "number"
+            },
+            {
+              "name": "parada_falta_material",
+              "type": "number"
+            },
+            {
+              "name": "parada_otros",
+              "type": "number"
+            },
+            {
+              "name": "paradas_total",
+              "type": "number"
+            },
+            {
+              "name": "motivo_principal",
+              "type": "string"
+            },
+            {
+              "name": "aviso",
+              "type": "boolean"
+            },
+            {
+              "name": "observaciones",
+              "type": "string"
+            },
+            {
+              "name": "registrado_en",
+              "type": "string"
+            },
+            {
+              "name": "creado_ms",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      }
+    },
+    {
+      "id": "68e8f97a-d0e5-5c20-8b7b-035cf2844039",
+      "name": "Leer filas (listar)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "informes_demo"
+        },
+        "matchType": "allConditions",
+        "returnAll": true
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "ab7ab5d5-890f-5191-ba3d-f24198093e31",
+      "name": "Filtrar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "jsCode": "\nconst PUBLICAS = ['fecha', 'turno', 'linea', 'operario', 'metros', 'objetivo', 'eficiencia', 'parada_averia',\n  'parada_cambio_formato', 'parada_falta_material', 'parada_otros', 'paradas_total', 'motivo_principal',\n  'aviso', 'observaciones', 'registrado_en'];\n\n// Devuelve las filas de la demo (sid 'demo') y las del visitante. Nunca expone el sid de nadie.\nconst q = $('Listar').first().json.query ?? {};\nconst sid = /^[a-f0-9]{32}$/.test(String(q.sid ?? '')) ? String(q.sid) : null;\nconst ORDEN = { 'Noche': 3, 'Tarde': 2, 'Mañana': 1 };\nconst filas = $input.all().map((i) => i.json)\n  .filter((r) => r.sid === 'demo' || (sid !== null && r.sid === sid))\n  .map((r) => {\n    const f = { propio: r.sid !== 'demo' };\n    for (const k of PUBLICAS) f[k] = r[k];\n    return f;\n  })\n  .sort((a, b) => (b.fecha.localeCompare(a.fecha)) || ((ORDEN[b.turno] ?? 0) - (ORDEN[a.turno] ?? 0)) || String(b.registrado_en).localeCompare(String(a.registrado_en)));\nreturn [{ json: { filas } }];\n"
+      }
+    },
+    {
+      "id": "e98cd755-d6cc-5555-b9bb-b427d9a7a29b",
+      "name": "Responder lista",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "f8795afa-283b-5a0b-b605-10b12e2d9b54",
+      "name": "Crear",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "demo-api/informe",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "df444689-083a-5d4b-9119-0a109839ab7e"
+    },
+    {
+      "id": "eb9ce702-76d7-55d9-9031-d17066adbdc0",
+      "name": "Asegurar tabla (crear)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "informes_demo",
+        "columns": {
+          "column": [
+            {
+              "name": "sid",
+              "type": "string"
+            },
+            {
+              "name": "fecha",
+              "type": "string"
+            },
+            {
+              "name": "turno",
+              "type": "string"
+            },
+            {
+              "name": "linea",
+              "type": "string"
+            },
+            {
+              "name": "operario",
+              "type": "string"
+            },
+            {
+              "name": "metros",
+              "type": "number"
+            },
+            {
+              "name": "objetivo",
+              "type": "number"
+            },
+            {
+              "name": "eficiencia",
+              "type": "number"
+            },
+            {
+              "name": "parada_averia",
+              "type": "number"
+            },
+            {
+              "name": "parada_cambio_formato",
+              "type": "number"
+            },
+            {
+              "name": "parada_falta_material",
+              "type": "number"
+            },
+            {
+              "name": "parada_otros",
+              "type": "number"
+            },
+            {
+              "name": "paradas_total",
+              "type": "number"
+            },
+            {
+              "name": "motivo_principal",
+              "type": "string"
+            },
+            {
+              "name": "aviso",
+              "type": "boolean"
+            },
+            {
+              "name": "observaciones",
+              "type": "string"
+            },
+            {
+              "name": "registrado_en",
+              "type": "string"
+            },
+            {
+              "name": "creado_ms",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      }
+    },
+    {
+      "id": "847e1bd5-7fad-5bd4-8c8e-6d30e1e9ceaf",
+      "name": "Leer filas (crear)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "informes_demo"
+        },
+        "matchType": "allConditions",
+        "returnAll": true
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "69695324-eff0-572f-a4e3-8ac898bb76b9",
+      "name": "Validar y calcular",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ],
+      "parameters": {
+        "jsCode": "\nconst PUBLICAS = ['fecha', 'turno', 'linea', 'operario', 'metros', 'objetivo', 'eficiencia', 'parada_averia',\n  'parada_cambio_formato', 'parada_falta_material', 'parada_otros', 'paradas_total', 'motivo_principal',\n  'aviso', 'observaciones', 'registrado_en'];\n\n// Valida el informe del visitante, aplica los topes de la demo y calcula eficiencia y paradas.\nconst b = $('Crear').first().json.body ?? {};\nconst filas = $input.all().map((i) => i.json).filter((r) => r.sid);\nconst fallo = (error, status = 400) => [{ json: { ok: false, status, error } }];\n\nconst sid = String(b.sid ?? '');\nif (!/^[a-f0-9]{32}$/.test(sid)) return fallo('Identificador de sesión no válido');\nif (filas.filter((r) => r.sid === sid).length >= 20) return fallo('Has llegado al máximo de 20 informes de prueba. Se borran solos a las 24 horas.', 429);\nif (filas.filter((r) => r.sid !== 'demo').length >= 400) return fallo('La demo está llena ahora mismo. Vuelve dentro de un rato.', 429);\n\nconst fecha = String(b.fecha ?? '');\nconst d = new Date(fecha + 'T00:00:00Z');\nif (!/^\\d{4}-\\d{2}-\\d{2}$/.test(fecha) || Number.isNaN(d.getTime()) || d.getUTCFullYear() < 2020 || d.getUTCFullYear() > 2099) return fallo('Fecha: formato AAAA-MM-DD');\nif (!['Mañana', 'Tarde', 'Noche'].includes(b.turno)) return fallo('Turno: elige Mañana, Tarde o Noche');\nif (!['Perfiladora 1', 'Perfiladora 2', 'Cizalla'].includes(b.linea)) return fallo('Línea: elige una de la lista');\n\nconst texto = (v, max) => String(v ?? '').replace(/[\\u0000-\\u001f\\u007f]/g, ' ').trim().slice(0, max);\nconst operario = texto(b.operario, 40);\nif (!operario) return fallo('Operario: escribe un nombre');\nconst observaciones = texto(b.observaciones, 200);\n\nconst num = (v, campo, max) => {\n  const n = v === undefined || v === null || v === '' ? 0 : Number(v);\n  if (!Number.isFinite(n) || n < 0) throw new Error(`${campo}: tiene que ser un número igual o mayor que 0`);\n  if (n > max) throw new Error(`${campo}: máximo ${max}`);\n  return n;\n};\ntry {\n  const metros = num(b.metros, 'Metros producidos', 1000000);\n  const objetivo = num(b.objetivo, 'Objetivo', 1000000);\n  if (objetivo === 0) throw new Error('Objetivo: tiene que ser mayor que 0');\n  const paradas = {\n    'Avería': num(b.parada_averia, 'Parada por avería', 480),\n    'Cambio de formato': num(b.parada_cambio_formato, 'Parada por cambio de formato', 480),\n    'Falta de material': num(b.parada_falta_material, 'Parada por falta de material', 480),\n    'Otros': num(b.parada_otros, 'Parada por otros motivos', 480),\n  };\n  const total = Object.values(paradas).reduce((a, x) => a + x, 0);\n  if (total > 480) throw new Error('Las paradas suman más de 480 minutos: revisa los datos');\n  const [motivo, minutos] = Object.entries(paradas).sort((x, y) => y[1] - x[1])[0];\n  const eficiencia = Math.round((metros / objetivo) * 1000) / 10;\n  return [{ json: { ok: true, fila: {\n    sid, fecha, turno: b.turno, linea: b.linea, operario, metros, objetivo, eficiencia,\n    parada_averia: paradas['Avería'], parada_cambio_formato: paradas['Cambio de formato'],\n    parada_falta_material: paradas['Falta de material'], parada_otros: paradas['Otros'],\n    paradas_total: total, motivo_principal: minutos > 0 ? motivo : 'Sin paradas',\n    aviso: eficiencia < 80, observaciones,\n    registrado_en: $now.setZone('Europe/Madrid').toISO(), creado_ms: Date.now(),\n  } } }];\n} catch (e) {\n  return fallo(e.message);\n}\n"
+      }
+    },
+    {
+      "id": "76e21461-e61b-5232-8f2d-5712a9bbed8f",
+      "name": "¿Válido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "4b6ec0cc-8389-5b09-8675-3be497091be9",
+      "name": "Extraer fila",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        220
+      ],
+      "parameters": {
+        "jsCode": "return [{ json: $json.fila }];"
+      }
+    },
+    {
+      "id": "b4283b10-0930-5dcc-bfd0-cabf43448064",
+      "name": "Guardar informe demo",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        220
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "informes_demo"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "be0b179f-2ae2-594a-afae-a08174f118ec",
+      "name": "Preparar respuesta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        220
+      ],
+      "parameters": {
+        "jsCode": "\nconst PUBLICAS = ['fecha', 'turno', 'linea', 'operario', 'metros', 'objetivo', 'eficiencia', 'parada_averia',\n  'parada_cambio_formato', 'parada_falta_material', 'parada_otros', 'paradas_total', 'motivo_principal',\n  'aviso', 'observaciones', 'registrado_en'];\n\nconst f = $('Extraer fila').first().json;\nconst r = { propio: true };\nfor (const k of PUBLICAS) r[k] = f[k];\nreturn [{ json: { ok: true, informe: r } }];\n"
+      }
+    },
+    {
+      "id": "45dae620-a6ab-55f3-b1c9-97b8964624d3",
+      "name": "Responder creado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1760,
+        220
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          },
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "75b7d1a0-a373-5d35-906e-5b3e42aae2ef",
+      "name": "Responder error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1100,
+        400
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, error: $json.error } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          },
+          "responseCode": "={{ $json.status }}"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Listar": {
+      "main": [
+        [
+          {
+            "node": "Asegurar tabla (listar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar tabla (listar)": {
+      "main": [
+        [
+          {
+            "node": "Leer filas (listar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer filas (listar)": {
+      "main": [
+        [
+          {
+            "node": "Filtrar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar": {
+      "main": [
+        [
+          {
+            "node": "Responder lista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear": {
+      "main": [
+        [
+          {
+            "node": "Asegurar tabla (crear)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar tabla (crear)": {
+      "main": [
+        [
+          {
+            "node": "Leer filas (crear)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer filas (crear)": {
+      "main": [
+        [
+          {
+            "node": "Validar y calcular",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar y calcular": {
+      "main": [
+        [
+          {
+            "node": "¿Válido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Válido?": {
+      "main": [
+        [
+          {
+            "node": "Extraer fila",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer fila": {
+      "main": [
+        [
+          {
+            "node": "Guardar informe demo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar informe demo": {
+      "main": [
+        [
+          {
+            "node": "Preparar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar respuesta": {
+      "main": [
+        [
+          {
+            "node": "Responder creado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}
