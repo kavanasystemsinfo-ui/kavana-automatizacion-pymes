@@ -15,7 +15,6 @@
       "position": [0, 0],
       "webhookId": "5f3c2a1e-7b4d-4e8a-9c21-3d6e8f0a1b27",
       "parameters": {
-        "path": "informe-turno",
         "formTitle": "Informe de turno",
         "formDescription": "Rellénalo al acabar el turno. Tarda menos de un minuto.",
         "formFields": {
@@ -41,6 +40,7 @@
         },
         "responseMode": "lastNode",
         "options": {
+          "path": "informe-turno",
           "appendAttribution": false,
           "buttonLabel": "Enviar informe"
         }
