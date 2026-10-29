@@ -16,9 +16,14 @@ enviar() {
   # Como el navegador: abre la página de confirmación y la confirma con un POST para cerrar la ejecución.
   espera=$(python3 -c "import json,sys; print(json.loads(sys.argv[1])['formWaitingUrl'])" "$respuesta")
   espera="${URL%%/form/*}/form-waiting/${espera#*/form-waiting/}"
-  # Si se pide antes de que la ejecución quede en espera, la página no responde: se da un segundo.
-  sleep 1
-  curl -fsS -m 15 "$espera" | grep -oE 'eficiencia [^<]*' | head -1
+  # Mientras la ejecución no llega a la confirmación (el correo tarda unos segundos), la página no responde: se reintenta.
+  local pagina="" intento
+  for intento in $(seq 1 12); do
+    pagina=$(curl -fsS -m 5 "$espera" 2>/dev/null) && break
+    sleep 1
+  done
+  [ -n "$pagina" ] || { echo "La confirmación no llegó en 1 minuto" >&2; return 1; }
+  grep -oE 'eficiencia [^<]*' <<<"$pagina" | head -1
   curl -fsS -m 15 -o /dev/null -X POST "$espera"
 }
 
