@@ -1,0 +1,39 @@
+# Informe de turno — n8n autoalojado.
+# El editor solo escucha en 127.0.0.1: se usa por túnel SSH, nunca desde internet.
+# El formulario se publicará aparte (F4) con una ruta de Caddy limitada a /form/*.
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.45.6
+    container_name: informe-turno-n8n
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5678:5678"
+    env_file: .env
+    environment:
+      TZ: Europe/Madrid
+      GENERIC_TIMEZONE: Europe/Madrid
+      N8N_PORT: "5678"
+      N8N_HOST: ${N8N_HOST:-localhost}
+      N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
+      WEBHOOK_URL: ${WEBHOOK_URL:-http://localhost:5678/}
+      # El editor va por túnel a http://localhost, así que la cookie no puede exigir HTTPS.
+      N8N_SECURE_COOKIE: "false"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
+      N8N_RUNNERS_ENABLED: "true"
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: "336"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./workflows:/workflows:ro
+    mem_limit: 768m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  n8n_data:
