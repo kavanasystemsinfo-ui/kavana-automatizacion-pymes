@@ -1,40 +1,42 @@
-# Informe de turno automático (n8n)
+# Automatización para pymes industriales (n8n)
 
-Al acabar el turno, el operario rellena un formulario en el móvil. n8n calcula la eficiencia y las paradas, guarda el registro y manda un resumen, con un aviso si la eficiencia baja del 80 %. Cada mañana a las 07:00 llega el resumen del día anterior.
+Cuatro trámites de oficina y planta de una pyme del metal, automatizados con n8n en un servidor pequeño y sin licencias. Cada uno sigue el mismo patrón: un formulario sencillo, unas reglas claras que comprueban los datos, un correo a la persona que decide y una fila apuntada en la hoja de la oficina.
 
-Demo con datos inventados de líneas de perfilado metálico.
+**Demo en vivo, sin registrarse:** https://informe.kavanasystems.com/demo/
 
 ![Panel de la demo](docs/demo-panel.png)
 
-## Qué problema resuelve
+| Trámite | Qué hace | Qué ahorra |
+| --- | --- | --- |
+| **Parte de fin de turno** (planta) | El operario cuenta el turno desde el móvil; n8n calcula la eficiencia y las paradas por motivo, avisa si baja del 80 % y cada mañana manda el resumen del día anterior. | Partes en papel que alguien pasa a limpio y caídas de eficiencia que se descubren tarde. |
+| **Vacaciones y permisos** (RRHH) | Cuenta los días laborables, comprueba el saldo y los solapes, avisa si coincide con alguien del departamento y la responsable aprueba o rechaza con un clic. | Correos sueltos, el calendario de la pared y saldos llevados a mano. |
+| **Facturas de proveedores** (contabilidad) | Cinco comprobaciones: proveedor dado de alta, base + IVA = total, no duplicada, coincide con el pedido y cuenta bancaria de la ficha. Si cuadra, se contabiliza y se programa el pago; si no, queda retenida. | Revisar factura a factura y el fraude del cambio de cuenta bancaria. |
+| **Contactos de clientes** (comercial) | Puntúa cada consulta de 0 a 100 con reglas fijas, la manda al comercial de su zona con un plazo para llamar y recuerda las que nadie atiende. | Presupuestos que se quedan sin respuesta. |
 
-Muchas pymes industriales anotan el turno en papel o en una hoja suelta que alguien pasa a limpio al día siguiente. Cuando la eficiencia cae, el jefe de turno se entera tarde y casi nunca sabe por qué.
-
-Con este flujo, el operario tarda menos de un minuto en rellenar el formulario desde el móvil y el responsable recibe en el momento:
-
-- la eficiencia del turno (metros frente al objetivo),
-- los minutos de parada por motivo (avería, cambio de formato, falta de material, otros),
-- un aviso con el motivo principal si la eficiencia baja del 80 %.
-
-Cada mañana a las 07:00 llega un resumen del día anterior por línea, con la eficiencia global y las 3 paradas más largas. Sin pasar nada a limpio, sin licencias y con un servidor pequeño.
+Sin IA: reglas fijas, fáciles de explicar y de cambiar. Datos inventados de una empresa de perfilado metálico.
 
 ## Cómo funciona
 
 ```mermaid
 flowchart LR
-    M[Móvil del operario] -->|formulario| N[n8n]
-    N -->|calcula eficiencia y paradas| T[(Tabla informes_turno)]
-    N -->|correo por turno, con aviso si baja del 80 %| R[Responsable]
-    C[Cada día 07:00] --> N
-    N -->|resumen del día anterior| R
-    D[Panel /demo] -->|API de solo lectura| N
+    F[Formulario en el móvil o la web] --> N[n8n]
+    N -->|valida y aplica las reglas| T[(Tablas de datos de n8n)]
+    N -->|correo con botones Aprobar / Rechazar| R[Persona que decide]
+    R -->|un clic| N
+    N -->|respuesta| E[Empleado, proveedor o cliente]
+    C[Cada día 07:00] -->|resumen de turnos| R
+    D[Panel /demo] -->|API pública de la demo| N
 ```
-
-![Formulario en el móvil](docs/formulario-movil.png)
 
 ## Estado
 
-Funciona en producción: formulario público en https://informe.kavanasystems.com, correo por turno con aviso si la eficiencia baja del 80 %, resumen diario a las 07:00 y panel de demo en https://informe.kavanasystems.com/demo/ con un mes de informes inventados.
+En producción en un VPS con Docker y Caddy:
+
+- Parte de fin de turno: formulario real en https://informe.kavanasystems.com con correo por turno y resumen diario a las 07:00.
+- Vacaciones y permisos: flujo real con aprobación por correo (`/form/rrhh-ausencias`).
+- Facturas y contactos de clientes: de momento solo en la demo. El flujo real de facturas leerá facturas de formato fijo del buzón por IMAP.
+
+![Formulario en el móvil](docs/formulario-movil.png)
 
 ## Demo pública
 
@@ -105,7 +107,7 @@ bash scripts/probar-ausencias.sh    # 2 solicitudes rechazadas por validación y
 Requisitos: Docker con Compose, git y openssl.
 
 ```bash
-git clone <este repo> && cd kavana-informe-turno
+git clone https://github.com/kavanasystemsinfo-ui/kavana-automatizacion-pymes.git && cd kavana-automatizacion-pymes
 bash scripts/deploy.sh
 ```
 
