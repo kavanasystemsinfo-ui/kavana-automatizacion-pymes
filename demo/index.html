@@ -589,7 +589,9 @@ document.querySelectorAll('.guia').forEach((g) => {
   if (leer(k) === 'cerrada') g.open = false;
   g.addEventListener('toggle', () => guardar(k, g.open ? 'abierta' : 'cerrada'));
 });
-let escena = ESCENAS.includes(leer('informe-demo-pestana')) ? leer('informe-demo-pestana') : 'turnos';
+// Un enlace como /demo/#facturas abre directamente ese trámite; si no, el último que se usó.
+const pedida = location.hash.slice(1);
+let escena = ESCENAS.includes(pedida) ? pedida : ESCENAS.includes(leer('informe-demo-pestana')) ? leer('informe-demo-pestana') : 'turnos';
 function pintarPasos() {
   const n = progreso[escena];
   document.querySelectorAll('#pasos li').forEach((li, i) => { li.className = i < n ? 'hecho' : i === n ? 'ahora' : ''; });
