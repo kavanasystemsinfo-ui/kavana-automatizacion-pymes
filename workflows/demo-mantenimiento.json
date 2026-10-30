@@ -9,7 +9,7 @@
   "nodes": [
     {
       "id": "1b4ae6b2-9c60-56d1-a790-0f40cdeaf370",
-      "name": "Cada hora",
+      "name": "Cada 15 minutos",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
@@ -20,8 +20,8 @@
         "rule": {
           "interval": [
             {
-              "field": "hours",
-              "hoursInterval": 1
+              "field": "minutes",
+              "minutesInterval": 15
             }
           ]
         }
@@ -123,7 +123,7 @@
     },
     {
       "id": "df6f6b80-f8fd-573c-8739-70d884ad23d6",
-      "name": "Borrar informes de más de 24 h",
+      "name": "Borrar informes de más de 2 h",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
@@ -149,7 +149,7 @@
             {
               "keyName": "creado_ms",
               "condition": "lt",
-              "keyValue": "={{ Date.now() - 24 * 3600 * 1000 }}"
+              "keyValue": "={{ Date.now() - 2 * 3600 * 1000 }}"
             }
           ]
         }
@@ -328,7 +328,7 @@
         380
       ],
       "parameters": {
-        "jsCode": "\n// Un mes de informes inventados (de hace 30 días a ayer), siempre iguales para una misma fecha.\nconst rng = (semilla) => () => {\n  semilla = (semilla + 0x6D2B79F5) | 0;\n  let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);\n  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;\n  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;\n};\nconst hoy = $now.setZone('Europe/Madrid').startOf('day');\nconst LINEAS = [\n  { n: 'Perfiladora 1', obj: 5000, ops: ['Marta Soler', 'Iván Ruiz', 'Carlos Vidal'], formato: 0.25 },\n  { n: 'Perfiladora 2', obj: 4000, ops: ['Laura Gómez', 'Raúl Peña', 'Sergio Mata'], formato: 0.5 },\n  { n: 'Cizalla', obj: 4000, ops: ['Nuria Ferrer', 'Hugo Ortiz', 'Pablo Cano'], formato: 0.15 },\n];\nconst TURNOS = [['Mañana', 14], ['Tarde', 22], ['Noche', 6]];\nconst entre = (r, a, b) => Math.round(a + r() * (b - a));\nconst OBS = {\n  'Avería': ['Avería en el motor principal; avisado mantenimiento.', 'Rodamiento del rodillo caliente; se cambia en el siguiente paro.', 'Fallo de sensor de final de carrera.'],\n  'Cambio de formato': ['Dos cambios de formato por pedidos pequeños.', 'Cambio de formato más largo de lo previsto.'],\n  'Falta de material': ['Llegó tarde la bobina del pedido urgente.', 'Se acabó la bobina y hubo que esperar la siguiente.'],\n  'Otros': ['Parada breve por limpieza de la línea.', 'Reunión de seguridad al inicio del turno.'],\n};\n\nconst filas = [];\nfor (let dia = 30; dia >= 1; dia--) {\n  const dt = hoy.minus({ days: dia });\n  if (dt.weekday === 7) continue;\n  LINEAS.forEach((l, li) => {\n    TURNOS.forEach(([turno, horaFin], ti) => {\n      if (dt.weekday === 6 && turno === 'Noche') return;\n      const r = rng(dia * 977 + li * 131 + ti * 17 + 12345);\n      // Historia: una racha de averías en la cizalla de noche y de tarde hace dos semanas.\n      const racha = l.n === 'Cizalla' && dia >= 12 && dia <= 16 && turno !== 'Mañana';\n      const averia = racha ? entre(r, 55, 110) : (r() < 0.12 ? entre(r, 15, 50) : 0);\n      const formato = r() < l.formato ? entre(r, 12, 40) : 0;\n      const material = r() < (turno === 'Tarde' ? 0.16 : 0.08) ? entre(r, 10, 40) : 0;\n      const otros = r() < 0.15 ? entre(r, 5, 20) : 0;\n      const total = averia + formato + material + otros;\n      let metros = Math.round(l.obj * (1 - (total / 480) * 1.6) * (0.9 + r() * 0.1));\n      metros = Math.max(0, Math.min(metros, Math.round(l.obj * 1.03)));\n      const eficiencia = Math.round((metros / l.obj) * 1000) / 10;\n      const paradas = { 'Avería': averia, 'Cambio de formato': formato, 'Falta de material': material, 'Otros': otros };\n      const [motivo, minutos] = Object.entries(paradas).sort((a, b) => b[1] - a[1])[0];\n      const opciones = OBS[motivo];\n      filas.push({ json: {\n        sid: 'demo', fecha: dt.toFormat('yyyy-MM-dd'), turno, linea: l.n, operario: l.ops[ti],\n        metros, objetivo: l.obj, eficiencia,\n        parada_averia: averia, parada_cambio_formato: formato, parada_falta_material: material, parada_otros: otros,\n        paradas_total: total, motivo_principal: minutos > 0 ? motivo : 'Sin paradas',\n        aviso: eficiencia < 80,\n        observaciones: minutos >= 25 ? opciones[entre(r, 0, opciones.length - 1)] : '',\n        registrado_en: dt.set({ hour: horaFin, minute: entre(r, 0, 20) }).toISO(),\n        creado_ms: 0,\n      } });\n    });\n  });\n}\nreturn filas;\n"
+        "jsCode": "\n// Un mes de informes inventados (de hace 30 días a hoy), siempre iguales para una misma fecha.\n// Los de hoy llevan su hora de fin de turno: la API solo enseña los turnos que ya han terminado.\nconst rng = (semilla) => () => {\n  semilla = (semilla + 0x6D2B79F5) | 0;\n  let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);\n  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;\n  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;\n};\nconst hoy = $now.setZone('Europe/Madrid').startOf('day');\nconst LINEAS = [\n  { n: 'Perfiladora 1', obj: 5000, ops: ['Marta Soler', 'Iván Ruiz', 'Carlos Vidal'], formato: 0.25 },\n  { n: 'Perfiladora 2', obj: 4000, ops: ['Laura Gómez', 'Raúl Peña', 'Sergio Mata'], formato: 0.5 },\n  { n: 'Cizalla', obj: 4000, ops: ['Nuria Ferrer', 'Hugo Ortiz', 'Pablo Cano'], formato: 0.15 },\n];\nconst TURNOS = [['Mañana', 14], ['Tarde', 22], ['Noche', 6]];\nconst entre = (r, a, b) => Math.round(a + r() * (b - a));\nconst OBS = {\n  'Avería': ['Avería en el motor principal; avisado mantenimiento.', 'Rodamiento del rodillo caliente; se cambia en el siguiente paro.', 'Fallo de sensor de final de carrera.'],\n  'Cambio de formato': ['Dos cambios de formato por pedidos pequeños.', 'Cambio de formato más largo de lo previsto.'],\n  'Falta de material': ['Llegó tarde la bobina del pedido urgente.', 'Se acabó la bobina y hubo que esperar la siguiente.'],\n  'Otros': ['Parada breve por limpieza de la línea.', 'Reunión de seguridad al inicio del turno.'],\n};\n\nconst filas = [];\nfor (let dia = 30; dia >= 0; dia--) {\n  const dt = hoy.minus({ days: dia });\n  if (dt.weekday === 7) continue;\n  LINEAS.forEach((l, li) => {\n    TURNOS.forEach(([turno, horaFin], ti) => {\n      if (dt.weekday === 6 && turno === 'Noche') return;\n      const r = rng(dia * 977 + li * 131 + ti * 17 + 12345);\n      // Historia: una racha de averías en la cizalla de noche y de tarde hace dos semanas.\n      const racha = l.n === 'Cizalla' && dia >= 12 && dia <= 16 && turno !== 'Mañana';\n      const averia = racha ? entre(r, 55, 110) : (r() < 0.12 ? entre(r, 15, 50) : 0);\n      const formato = r() < l.formato ? entre(r, 12, 40) : 0;\n      const material = r() < (turno === 'Tarde' ? 0.16 : 0.08) ? entre(r, 10, 40) : 0;\n      const otros = r() < 0.15 ? entre(r, 5, 20) : 0;\n      const total = averia + formato + material + otros;\n      let metros = Math.round(l.obj * (1 - (total / 480) * 1.6) * (0.9 + r() * 0.1));\n      metros = Math.max(0, Math.min(metros, Math.round(l.obj * 1.03)));\n      const eficiencia = Math.round((metros / l.obj) * 1000) / 10;\n      const paradas = { 'Avería': averia, 'Cambio de formato': formato, 'Falta de material': material, 'Otros': otros };\n      const [motivo, minutos] = Object.entries(paradas).sort((a, b) => b[1] - a[1])[0];\n      const opciones = OBS[motivo];\n      filas.push({ json: {\n        sid: 'demo', fecha: dt.toFormat('yyyy-MM-dd'), turno, linea: l.n, operario: l.ops[ti],\n        metros, objetivo: l.obj, eficiencia,\n        parada_averia: averia, parada_cambio_formato: formato, parada_falta_material: material, parada_otros: otros,\n        paradas_total: total, motivo_principal: minutos > 0 ? motivo : 'Sin paradas',\n        aviso: eficiencia < 80,\n        observaciones: minutos >= 25 ? opciones[entre(r, 0, opciones.length - 1)] : '',\n        registrado_en: dt.set({ hour: horaFin, minute: entre(r, 0, 20) }).toISO(),\n        creado_ms: 0,\n      } });\n    });\n  });\n}\nreturn filas;\n"
       }
     },
     {
@@ -361,11 +361,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1100,
+        1980,
         380
       ],
       "parameters": {
-        "jsCode": "\nreturn [{ json: { sembradas: $('Generar semilla').all().length } }];\n"
+        "jsCode": "\nreturn [{ json: { sembradas: $('Generar semilla').all().length, ausencias: $('Generar plantilla RRHH').all().length } }];\n"
       }
     },
     {
@@ -459,45 +459,182 @@
         "filters": {
           "conditions": [
             {
+              "keyName": "sid",
+              "condition": "neq",
+              "keyValue": "demo"
+            },
+            {
               "keyName": "creado_ms",
               "condition": "lt",
-              "keyValue": "={{ Date.now() - 24 * 3600 * 1000 }}"
+              "keyValue": "={{ Date.now() - 2 * 3600 * 1000 }}"
             }
           ]
         }
       },
       "id": "2d4eb4c9-5704-5940-9529-a09cd91fa6b3",
-      "name": "Borrar ausencias de más de 24 h",
+      "name": "Borrar ausencias de más de 2 h",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
         440,
         -200
       ]
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "rrhh_demo",
+        "columns": {
+          "column": [
+            {
+              "name": "sid",
+              "type": "string"
+            },
+            {
+              "name": "fecha_solicitud",
+              "type": "string"
+            },
+            {
+              "name": "empleado",
+              "type": "string"
+            },
+            {
+              "name": "departamento",
+              "type": "string"
+            },
+            {
+              "name": "tipo",
+              "type": "string"
+            },
+            {
+              "name": "desde",
+              "type": "string"
+            },
+            {
+              "name": "hasta",
+              "type": "string"
+            },
+            {
+              "name": "dias",
+              "type": "number"
+            },
+            {
+              "name": "saldo_previo",
+              "type": "number"
+            },
+            {
+              "name": "estado",
+              "type": "string"
+            },
+            {
+              "name": "comentario",
+              "type": "string"
+            },
+            {
+              "name": "conflictos",
+              "type": "string"
+            },
+            {
+              "name": "decidido_en",
+              "type": "string"
+            },
+            {
+              "name": "creado_ms",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "id": "d33ec233-9878-4f61-9c0d-5f88459e5af1",
+      "name": "Asegurar tabla (semilla RRHH)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        380
+      ],
+      "executeOnce": true
+    },
+    {
+      "id": "9a2c2148-2983-45cf-8244-561045296c09",
+      "name": "Borrar la plantilla anterior",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        380
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "rrhh_demo"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "sid",
+              "condition": "eq",
+              "keyValue": "demo"
+            }
+          ]
+        }
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "12428b0a-ff70-4f5d-b980-ba119fe14767",
+      "name": "Generar plantilla RRHH",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        380
+      ],
+      "parameters": {
+        "jsCode": "\n// Solicitudes de compañeros inventados, con fechas relativas a hoy y siempre las mismas para un mismo día.\n// Son comunes a todos los visitantes y de solo lectura. Ninguno es un empleado que el visitante pueda elegir.\nconst FESTIVOS = ['01-01', '01-06', '05-01', '08-15', '10-12', '11-01', '12-06', '12-08', '12-25'];\nconst VIERNES_SANTO = ['2026-04-03', '2027-03-26'];\nconst laborable = (d) => d.weekday < 6 && !FESTIVOS.includes(d.toFormat('MM-dd')) && !VIERNES_SANTO.includes(d.toFormat('yyyy-MM-dd'));\nconst contar = (a, z) => { let n = 0; for (let d = a; d <= z; d = d.plus({ days: 1 })) if (laborable(d)) n++; return n; };\n\n// El lunes de la semana que viene no, la siguiente: la página propone por defecto unas fechas que coinciden con Iván Ruiz.\nconst hoy = $now.setZone('Europe/Madrid').startOf('day');\nconst base = hoy.plus({ days: (8 - hoy.weekday) + 7 });\nconst PLANTILLA = [\n  // empleado, departamento, tipo, estado, días desde la base (inicio, fin), pedida hace N días, saldo previo\n  ['Raúl Peña', 'Producción', 'Asuntos propios', 'Aprobada', -14, -14, 12, 18],\n  ['Iván Ruiz', 'Producción', 'Vacaciones', 'Aprobada', 0, 4, 9, 22],\n  ['Andrés Gil', 'Comercial', 'Permiso retribuido', 'Pendiente', 1, 1, 1, 15],\n  ['Lucía Prieto', 'Administración', 'Vacaciones', 'Rechazada', 2, 6, 6, 20],\n  ['Carmen Vidal', 'Administración', 'Asuntos propios', 'Pendiente', 3, 3, 2, 17],\n  ['Sergio Mata', 'Logística', 'Vacaciones', 'Aprobada', 7, 11, 8, 22],\n  ['Elena Martín', 'Calidad', 'Vacaciones', 'Aprobada', 14, 18, 5, 19],\n  ['Óscar Lara', 'Logística', 'Vacaciones', 'Pendiente', 21, 25, 0, 22],\n];\nconst filas = PLANTILLA.map(([empleado, departamento, tipo, estado, a, z, hace, saldo], i) => {\n  const desde = base.plus({ days: a });\n  const hasta = base.plus({ days: z });\n  const pedida = hoy.minus({ days: hace }).set({ hour: 8 + i, minute: (i * 17) % 60 });\n  return {\n    sid: 'demo', fecha_solicitud: pedida.toFormat('yyyy-MM-dd HH:mm'), empleado, departamento, tipo,\n    desde: desde.toFormat('yyyy-MM-dd'), hasta: hasta.toFormat('yyyy-MM-dd'), dias: contar(desde, hasta),\n    saldo_previo: saldo, estado, comentario: '', conflictos: '',\n    decidido_en: estado === 'Pendiente' ? '' : pedida.plus({ hours: 26 }).toFormat('yyyy-MM-dd HH:mm'),\n    creado_ms: 0,\n  };\n}).filter((r) => r.dias > 0);\n// Coincidencias con el resto del departamento, como las calcularía el flujo real.\nfor (const r of filas) {\n  r.conflictos = filas\n    .filter((o) => o !== r && o.departamento === r.departamento && o.estado !== 'Rechazada' && o.desde <= r.hasta && o.hasta >= r.desde)\n    .map((o) => `${o.empleado} (${o.desde} a ${o.hasta}, ${o.estado.toLowerCase()})`)\n    .join('; ');\n}\nreturn filas.map((json) => ({ json }));\n"
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "85359275-5f8a-46c9-a28f-4c4d118801c5",
+      "name": "Guardar plantilla RRHH",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1760,
+        380
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "rrhh_demo"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {}
+      }
     }
   ],
   "connections": {
-    "Cada hora": {
-      "main": [
-        [
-          {
-            "node": "Asegurar tabla (purga)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Asegurar tabla (purga RRHH)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Asegurar tabla (purga)": {
       "main": [
         [
           {
-            "node": "Borrar informes de más de 24 h",
+            "node": "Borrar informes de más de 2 h",
             "type": "main",
             "index": 0
           }
@@ -563,7 +700,7 @@
       "main": [
         [
           {
-            "node": "Resumen",
+            "node": "Asegurar tabla (semilla RRHH)",
             "type": "main",
             "index": 0
           }
@@ -574,7 +711,67 @@
       "main": [
         [
           {
-            "node": "Borrar ausencias de más de 24 h",
+            "node": "Borrar ausencias de más de 2 h",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cada 15 minutos": {
+      "main": [
+        [
+          {
+            "node": "Asegurar tabla (purga)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Asegurar tabla (purga RRHH)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar tabla (semilla RRHH)": {
+      "main": [
+        [
+          {
+            "node": "Borrar la plantilla anterior",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Borrar la plantilla anterior": {
+      "main": [
+        [
+          {
+            "node": "Generar plantilla RRHH",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar plantilla RRHH": {
+      "main": [
+        [
+          {
+            "node": "Guardar plantilla RRHH",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar plantilla RRHH": {
+      "main": [
+        [
+          {
+            "node": "Resumen",
             "type": "main",
             "index": 0
           }

@@ -16,7 +16,7 @@
     --good: #107c41; --good-soft: #e6f4ea; --bad: #c42b1c; --bad-soft: #fdeceb;
     --warn-soft: #fff4ce;
     --mail-sel: #e8f1fb; --mail-unread: #0f6cbd;
-    --xl: #107c41; --xl-grid: #d4d4d4; --xl-head: #f3f3f3; --xl-head-ink: #444; --xl-sel: #107c41; --xl-new: #fff2cc;
+    --xl: #107c41; --xl-grid: #d4d4d4; --xl-head: #f3f3f3; --xl-head-ink: #444; --xl-sel: #107c41; --xl-new: #fff2cc; --xl-tuya: #e8f1fb; --xl-tuya-ink: #0f6cbd;
     --shadow: 0 1px 2px rgba(0,0,0,.06), 0 6px 20px rgba(0,0,0,.06);
     --radius: 10px;
   }
@@ -163,15 +163,17 @@
   .fx > span { padding: 4px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .fx .caja { border-right: 1px solid var(--xl-grid); text-align: center; }
   .fx .fxi { color: var(--faint); font-style: italic; border-right: 1px solid var(--xl-grid); text-align: center; }
-  .hoja { overflow-x: auto; }
+  .hoja { overflow: auto; max-height: 360px; }
   .hoja table { border-collapse: collapse; font-size: 14px; min-width: 100%; }
   .hoja th, .hoja td { border: 1px solid var(--xl-grid); padding: 3px 8px; white-space: nowrap; text-align: left; background: #fff; height: 26px; }
-  .hoja thead th { background: var(--xl-head); color: var(--xl-head-ink); font-weight: 400; text-align: center; font-size: 13px; padding: 2px 8px; }
+  .hoja thead th { position: sticky; top: 0; z-index: 1; background: var(--xl-head); color: var(--xl-head-ink); font-weight: 400; text-align: center; font-size: 13px; padding: 2px 8px; }
   .hoja tbody th { background: var(--xl-head); color: var(--xl-head-ink); font-weight: 400; text-align: center; width: 34px; font-size: 13px; }
   .hoja tbody td { cursor: cell; }
   .hoja tr.cabecera td { font-weight: 700; }
   .hoja td.num { text-align: right; font-variant-numeric: tabular-nums; }
   .hoja td.sel { outline: 2px solid var(--xl-sel); outline-offset: -2px; }
+  .hoja tr.tuya td { background: var(--xl-tuya); }
+  .hoja tr.tuya th { background: var(--xl-tuya-ink); color: #fff; font-weight: 600; }
   .hoja tr.nuevo td { background: var(--xl-new); transition: background 2s; }
   .hoja td.mal { color: var(--bad); }
   .hoja td.bien { color: var(--good); }
@@ -206,12 +208,12 @@
   <header class="hero">
     <p class="eyebrow">Demo · Automatización para pymes</p>
     <h1>Prueba cómo se automatiza un trámite de tu empresa</h1>
-    <p>Rellena el formulario como lo haría un empleado desde el móvil. Al momento verás el correo que recibe su responsable y la fila que queda apuntada en la hoja de Excel.</p>
+    <p>Rellena el formulario como lo haría un empleado desde el móvil. Al momento verás el correo que recibe su responsable y la fila que queda apuntada en la hoja de Excel, debajo de lo que la empresa de ejemplo ya lleva registrado.</p>
     <div class="chips">
       <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>Sin registrarte</span>
       <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>Un minuto</span>
       <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>No se envía ningún correo de verdad</span>
-      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>Lo tuyo solo lo ves tú y se borra en 24 h</span>
+      <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>Lo tuyo solo lo ves tú y se borra a las 2 h</span>
     </div>
   </header>
 
@@ -296,7 +298,7 @@
           <div class="xl-bar"><span class="xl-ico" aria-hidden="true">X</span><span class="tit">partes-de-turno.xlsx</span><button type="button" class="descargar" data-hoja="turnos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>Descargar</button></div>
           <div class="fx" aria-hidden="true"><span class="caja">A1</span><span class="fxi">fx</span><span class="fxv">Fecha</span></div>
           <div class="hoja"><table><thead></thead><tbody></tbody></table></div>
-          <div class="xl-pie"><span class="tab">Partes</span><span class="info">Cada parte añade una fila. Ábrelo con Excel, LibreOffice o Google Sheets.</span></div>
+          <div class="xl-pie"><span class="tab">Partes</span><span class="info">Última semana de la planta de ejemplo. Tus partes van al final, en azul.</span></div>
         </div>
       </div>
     </div>
@@ -355,7 +357,7 @@
           <div class="xl-bar"><span class="xl-ico" aria-hidden="true">X</span><span class="tit">vacaciones-y-permisos.xlsx</span><button type="button" class="descargar" data-hoja="ausencias"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>Descargar</button></div>
           <div class="fx" aria-hidden="true"><span class="caja">A1</span><span class="fxi">fx</span><span class="fxv">Empleado</span></div>
           <div class="hoja"><table><thead></thead><tbody></tbody></table></div>
-          <div class="xl-pie"><span class="tab">Ausencias</span><span class="info">Las pendientes también se pueden decidir desde aquí.</span></div>
+          <div class="xl-pie"><span class="tab">Ausencias</span><span class="info">Tus solicitudes van al final, en azul, y las pendientes se deciden desde aquí.</span></div>
         </div>
       </div>
     </div>
@@ -366,8 +368,8 @@
     <ul>
       <li>Funciona con n8n, una herramienta de automatización instalada en un servidor propio. Esta demo usa los mismos cálculos y las mismas plantillas de correo que la versión que enviaría correos de verdad.</li>
       <li>En una empresa, el formulario se abre desde el móvil con un enlace o un código QR, los correos llegan a las personas reales y la hoja puede ser un Excel o una hoja de Google compartida.</li>
-      <li>Aquí no hay cuentas: tu navegador guarda un identificador aleatorio y solo ves tus filas. Todo se borra a las 24 horas. Los nombres y las cifras son inventados.</li>
-      <li>En vacaciones se cuentan solo los días laborables (sin fines de semana ni festivos nacionales), con un saldo de 22 días al año, y se avisa si coincides con alguien de tu departamento. Iván Ruiz, Carmen Vidal y Sergio Mata son compañeros inventados que ya tienen días pedidos.</li>
+      <li>Aquí no hay cuentas: tu navegador guarda un identificador aleatorio. Todos ven los mismos datos de ejemplo, que no se pueden cambiar; lo que envías tú solo lo ves tú y se borra a las 2 horas. Los nombres y las cifras son inventados.</li>
+      <li>En vacaciones se cuentan solo los días laborables (sin fines de semana ni festivos nacionales), con un saldo de 22 días al año, y se avisa si coincides con alguien de tu departamento. Las solicitudes que ya están en la hoja son de compañeros inventados.</li>
     </ul>
   </details>
 </main>
@@ -441,17 +443,19 @@ function pintarHoja(sec, columnas, filas, nuevo) {
   const tabla = sec.querySelector('.hoja table');
   tabla.querySelector('thead').innerHTML = '<tr><th></th>' + columnas.map((_, i) => `<th>${LETRAS[i]}</th>`).join('') + '</tr>';
   const cab = '<tr class="cabecera"><th>1</th>' + columnas.map((c) => `<td>${ESC(c.t)}</td>`).join('') + '</tr>';
-  const cuerpo = filas.map((f, i) => `<tr class="${nuevo !== undefined && f.__clave === nuevo ? 'nuevo' : ''}"><th>${i + 2}</th>` +
+  const cuerpo = filas.map((f, i) => `<tr class="${f.tuya ? 'tuya' : ''} ${f.tuya && nuevo !== undefined && f.__clave === nuevo ? 'nuevo' : ''}"><th>${i + 2}</th>` +
     columnas.map((c) => c.html(f)).join('') + '</tr>').join('');
   const vacias = Array.from({ length: Math.max(0, 4 - filas.length) }, (_, i) =>
     `<tr><th>${filas.length + i + 2}</th>` + columnas.map(() => '<td></td>').join('') + '</tr>').join('');
   tabla.querySelector('tbody').innerHTML = cab + cuerpo + vacias;
+  // Como al abrir un Excel que se va rellenando: se ve el final, donde caen las filas nuevas.
+  const hoja = sec.querySelector('.hoja');
+  hoja.scrollTop = hoja.scrollHeight;
   const fila = tabla.querySelector('tr.nuevo');
   if (fila) {
     seleccionar(sec, fila.querySelector('td'));
     setTimeout(() => fila.classList.remove('nuevo'), 2500);
   }
-  sec.querySelector('.descargar').disabled = !filas.length;
 }
 // Como en Excel: al pulsar una celda se ve su dirección y su contenido en la barra de fórmulas.
 function seleccionar(sec, td) {
@@ -577,7 +581,7 @@ const COL_T = [
 async function cargarTurnos(nuevo) {
   const filas = (await pedir(`/informes?sid=${SID}`)).filas || [];
   filas.forEach((f) => { f.__clave = f.registrado_en; });
-  if (filas.length && !progreso.turnos) progreso.turnos = 3;
+  if (filas.some((f) => f.tuya) && !progreso.turnos) progreso.turnos = 3;
   pintarHoja(sT, COL_T, filas, nuevo);
   if (escena === 'turnos') pintarPasos();
 }
@@ -628,15 +632,10 @@ const laborable = (d) => { const w = d.getUTCDay(); const s = isoDia(d); return 
 const contar = (a, z) => { let n = 0; for (let d = new Date(a); d <= z; d = new Date(d.getTime() + DIA)) if (laborable(d)) n++; return n; };
 const corta = (s) => new Date(s + 'T00:00:00Z').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 
-// Mismas fechas que los compañeros inventados del flujo: la semana que viene no, la siguiente.
+// Por defecto, unas fechas que coinciden con Iván Ruiz, de la plantilla de ejemplo: la semana que viene no, la siguiente.
 const hoyUTC = (() => { const d = new Date(); return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); })();
 const base = new Date(hoyUTC.getTime() + ((((8 - hoyUTC.getUTCDay()) % 7) || 7) + 7) * DIA);
 const mas = (n) => isoDia(new Date(base.getTime() + n * DIA));
-const COMPANEROS = [
-  { empleado: 'Iván Ruiz', departamento: 'Producción', desde: mas(0), hasta: mas(4) },
-  { empleado: 'Carmen Vidal', departamento: 'Administración', desde: mas(3), hasta: mas(3) },
-  { empleado: 'Sergio Mata', departamento: 'Logística', desde: mas(7), hasta: mas(11) },
-];
 fA.desde.value = mas(2); fA.hasta.value = mas(4);
 let filasA = [];
 
@@ -647,7 +646,7 @@ function vivoAusencias() {
   if (z < a) { v.className = 'vivo mal'; v.innerHTML = '<p>La fecha final es anterior a la inicial.</p>'; return; }
   const n = contar(a, z);
   const dep = DEPTO[fA.empleado.value];
-  const otros = COMPANEROS.concat(filasA.filter((f) => f.estado !== 'Rechazada' && f.empleado !== fA.empleado.value))
+  const otros = filasA.filter((f) => f.estado !== 'Rechazada' && f.empleado !== fA.empleado.value)
     .filter((c) => c.departamento === dep && c.desde <= fA.hasta.value && c.hasta >= fA.desde.value);
   v.className = 'vivo ' + (otros.length ? 'aviso' : 'neutro');
   v.innerHTML = `<div class="cifra">${n} ${n === 1 ? 'día laborable' : 'días laborables'}</div>
@@ -666,14 +665,14 @@ const COL_A = [
   { t: 'Desde', html: (f) => celda(f.desde) },
   { t: 'Hasta', html: (f) => celda(f.hasta) },
   { t: 'Días', html: (f) => celda(f.dias, 'num') },
-  { t: 'Estado', html: (f) => f.estado === 'Pendiente' ? `<td data-v="Pendiente">Pendiente ${botonesHoja(f.id)}</td>` : celda(f.estado, f.estado === 'Aprobada' ? 'bien' : 'mal') },
+  { t: 'Estado', html: (f) => f.estado === 'Pendiente' && f.tuya ? `<td data-v="Pendiente">Pendiente ${botonesHoja(f.id)}</td>` : celda(f.estado, { Aprobada: 'bien', Rechazada: 'mal' }[f.estado] || '') },
   { t: 'Coincide con', html: (f) => `<td class="corta" data-v="${ESC(f.conflictos)}">${ESC(f.conflictos)}</td>` },
   { t: 'Solicitada', html: (f) => celda(f.fecha_solicitud) },
 ];
 async function cargarAusencias(nuevo) {
   filasA = (await pedir(`/ausencias?sid=${SID}`)).filas || [];
   filasA.forEach((f) => { f.__clave = f.id; });
-  if (filasA.length && !progreso.ausencias) progreso.ausencias = 3;
+  if (filasA.some((f) => f.tuya) && !progreso.ausencias) progreso.ausencias = 3;
   pintarHoja(sA, COL_A, filasA, nuevo);
   vivoAusencias();
   if (escena === 'ausencias') pintarPasos();
