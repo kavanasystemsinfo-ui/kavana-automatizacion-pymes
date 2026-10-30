@@ -38,7 +38,9 @@ Funciona en producción: formulario público en https://informe.kavanasystems.co
 
 ## Demo pública
 
-El panel `/demo/` lee los informes de ejemplo y deja enviar un informe de prueba. Los datos sembrados no se pueden modificar. Lo que envía cada visitante solo lo ve él y se borra a las 24 horas (flujo `demo-mantenimiento`). No se manda ningún correo desde la demo.
+El panel `/demo/` tiene tres trámites: parte de fin de turno, vacaciones y permisos, y facturas de proveedores. Todos los visitantes ven los mismos datos de ejemplo (un mes de turnos, la plantilla de ausencias y el libro de facturas recibidas), que se regeneran cada noche con fechas relativas a hoy y no se pueden modificar. Lo que envía cada visitante sale al final de la hoja, resaltado, solo lo ve él y se borra a las 2 horas (flujo `demo-mantenimiento`, cada 15 minutos). No se manda ningún correo desde la demo: la página enseña el que se enviaría.
+
+En facturas, cada factura pasa cinco comprobaciones (proveedor dado de alta, base + IVA = total, no duplicada, coincide con el pedido de compra y cuenta bancaria de la ficha). Si todo cuadra se contabiliza y se programa el pago en la remesa del día 10 o 25; si no, queda retenida hasta que contabilidad la aprueba o la rechaza. Sin IA: el flujo real leerá facturas de formato fijo del buzón por IMAP.
 
 ```bash
 bash scripts/importar-flujos.sh   # importa todos los flujos, demo incluida
@@ -47,7 +49,7 @@ bash scripts/publicar-demo.sh     # copia el panel y siembra el mes de ejemplo
 
 ## Publicación
 
-Solo salen a internet el formulario, el panel de la demo y las dos rutas de su API. Caddy publica `/form/*` y `/form-waiting/*`, `/demo/*` y `/webhook/demo-api/informes` e `/informe`, manda la raíz al panel y devuelve 404 para todo lo demás, editor y resto de la API incluidos (`deploy/Caddyfile.informe`). n8n sigue escuchando solo en `127.0.0.1` y genera los enlaces públicos con `N8N_WEBHOOK_URL`.
+Solo salen a internet el formulario, el panel de la demo y su API. Caddy publica `/form/*`, `/form-waiting/*`, `/webhook-waiting/*`, `/demo/*` y `/webhook/demo-api/*`, manda la raíz al panel y devuelve 404 para todo lo demás, editor y resto de la API incluidos (`deploy/Caddyfile.informe`). n8n sigue escuchando solo en `127.0.0.1` y genera los enlaces públicos con `N8N_WEBHOOK_URL`.
 
 Para añadir el bloque a Caddy sin cortar el servicio:
 

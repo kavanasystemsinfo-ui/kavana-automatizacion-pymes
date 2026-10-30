@@ -1,0 +1,990 @@
+{
+  "id": "DemoFacturasApi1",
+  "name": "Demo pública · Facturas",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "demo-api/facturas",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "906db7c6-d6c1-4055-bcf2-488b636b0852",
+      "name": "Listar facturas",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "004871bf-2d25-5f7b-a9be-6268521e2fd9"
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "facturas_demo",
+        "columns": {
+          "column": [
+            {
+              "name": "sid",
+              "type": "string"
+            },
+            {
+              "name": "proveedor",
+              "type": "string"
+            },
+            {
+              "name": "nif",
+              "type": "string"
+            },
+            {
+              "name": "numero",
+              "type": "string"
+            },
+            {
+              "name": "fecha",
+              "type": "string"
+            },
+            {
+              "name": "pedido",
+              "type": "string"
+            },
+            {
+              "name": "concepto",
+              "type": "string"
+            },
+            {
+              "name": "base",
+              "type": "number"
+            },
+            {
+              "name": "iva_pct",
+              "type": "number"
+            },
+            {
+              "name": "cuota_iva",
+              "type": "number"
+            },
+            {
+              "name": "total",
+              "type": "number"
+            },
+            {
+              "name": "iban",
+              "type": "string"
+            },
+            {
+              "name": "vencimiento",
+              "type": "string"
+            },
+            {
+              "name": "fecha_pago",
+              "type": "string"
+            },
+            {
+              "name": "estado",
+              "type": "string"
+            },
+            {
+              "name": "incidencias",
+              "type": "string"
+            },
+            {
+              "name": "comprobaciones",
+              "type": "string"
+            },
+            {
+              "name": "decidido_en",
+              "type": "string"
+            },
+            {
+              "name": "creado_ms",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "id": "91039a8a-681f-4130-ae59-462e327ae3aa",
+      "name": "Asegurar tabla (listar)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "facturas_demo"
+        },
+        "matchType": "allConditions",
+        "returnAll": true
+      },
+      "id": "6bb408b7-7da9-4a68-b92f-c04b35ef5cc6",
+      "name": "Leer facturas (listar)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const PUBLICAS = ['id', 'proveedor', 'nif', 'numero', 'fecha', 'pedido', 'concepto', 'base', 'iva_pct', 'cuota_iva',\n  'total', 'vencimiento', 'fecha_pago', 'estado', 'incidencias', 'decidido_en'];\n\n// Devuelve las facturas de ejemplo (comunes a todos, de solo lectura) y debajo las que ha enviado el visitante,\n// en el orden en que las envió y marcadas como suyas. Nunca expone el sid.\nconst q = $('Listar facturas').first().json.query ?? {};\nconst sid = /^[a-f0-9]{32}$/.test(String(q.sid ?? '')) ? String(q.sid) : null;\nconst todas = $input.all().map((i) => i.json);\nconst publica = (r) => {\n  const f = { tuya: r.sid !== 'demo' };\n  for (const k of PUBLICAS) f[k] = r[k];\n  return f;\n};\nconst demo = todas.filter((r) => r.sid === 'demo').sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));\nconst propias = sid === null ? [] : todas\n  .filter((r) => r.sid === sid)\n  .sort((a, b) => Number(a.creado_ms) - Number(b.creado_ms));\nreturn [{ json: { filas: demo.concat(propias).map(publica) } }];\n"
+      },
+      "id": "1ce9f5d6-0dc3-4cfd-88c2-6162d677ec70",
+      "name": "Filtrar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      },
+      "id": "6ca4004f-fea5-4b68-9752-07c0eb5eae67",
+      "name": "Responder lista",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "demo-api/factura",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "25cf651b-36bb-4fe7-8625-48e00171420f",
+      "name": "Crear factura",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "e272360e-d5ef-58ce-88f2-d020161420ae"
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "facturas_demo",
+        "columns": {
+          "column": [
+            {
+              "name": "sid",
+              "type": "string"
+            },
+            {
+              "name": "proveedor",
+              "type": "string"
+            },
+            {
+              "name": "nif",
+              "type": "string"
+            },
+            {
+              "name": "numero",
+              "type": "string"
+            },
+            {
+              "name": "fecha",
+              "type": "string"
+            },
+            {
+              "name": "pedido",
+              "type": "string"
+            },
+            {
+              "name": "concepto",
+              "type": "string"
+            },
+            {
+              "name": "base",
+              "type": "number"
+            },
+            {
+              "name": "iva_pct",
+              "type": "number"
+            },
+            {
+              "name": "cuota_iva",
+              "type": "number"
+            },
+            {
+              "name": "total",
+              "type": "number"
+            },
+            {
+              "name": "iban",
+              "type": "string"
+            },
+            {
+              "name": "vencimiento",
+              "type": "string"
+            },
+            {
+              "name": "fecha_pago",
+              "type": "string"
+            },
+            {
+              "name": "estado",
+              "type": "string"
+            },
+            {
+              "name": "incidencias",
+              "type": "string"
+            },
+            {
+              "name": "comprobaciones",
+              "type": "string"
+            },
+            {
+              "name": "decidido_en",
+              "type": "string"
+            },
+            {
+              "name": "creado_ms",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "id": "859a4796-f41b-4f6b-9dda-85d8cb1e12de",
+      "name": "Asegurar tabla (crear)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "facturas_demo"
+        },
+        "matchType": "allConditions",
+        "returnAll": true
+      },
+      "id": "976b438f-abba-4af3-9b67-edf7e7d3601c",
+      "name": "Leer facturas (crear)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        300
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Datos maestros inventados: fichas de proveedor (con la cuenta bancaria registrada) y pedidos de compra.\nconst PROVEEDORES = {\n  B48123456: { nombre: 'Aceros del Norte, S.L.', iban: 'ES9121000418450200051332', plazo: 60 },\n  A46234567: { nombre: 'Bobinas Levante, S.A.', iban: 'ES6000491500051234567892', plazo: 60 },\n  B50345678: { nombre: 'Transportes Ebro, S.L.', iban: 'ES1720852066623456789011', plazo: 30 },\n  B28456789: { nombre: 'Suministros Industriales Gil, S.L.', iban: 'ES3001820815200201234567', plazo: 30 },\n  B26567890: { nombre: 'Mantenimiento Técnico Arnedo, S.L.', iban: 'ES4521003915102200123456', plazo: 30 },\n};\n// Proveedores que pueden enviar facturas pero no tienen ficha (no están dados de alta).\nconst SIN_FICHA = { B31678901: 'Talleres Ribera, S.L.' };\nconst PEDIDOS = {\n  'PC-2026-0412': { nif: 'B48123456', concepto: 'Bobina de acero galvanizado 1,5 mm (12 t)', base: 10680 },\n  'PC-2026-0415': { nif: 'A46234567', concepto: 'Bobina prelacada RAL 9002 (8 t)', base: 9120 },\n  'PC-2026-0418': { nif: 'B50345678', concepto: 'Portes de octubre (14 viajes)', base: 2380 },\n  'PC-2026-0421': { nif: 'B28456789', concepto: 'EPIs y guantes anticorte', base: 845.6 },\n  'PC-2026-0423': { nif: 'B26567890', concepto: 'Cambio de rodamientos de la Perfiladora 2', base: 1940 },\n  'PC-2026-0426': { nif: 'B48123456', concepto: 'Fleje de acero 0,8 mm (5 t)', base: 4350 },\n  'PC-2026-0427': { nif: 'B48123456', concepto: 'Chapa lisa 2 mm (3 t)', base: 2910 },\n  'PC-2026-0430': { nif: 'B28456789', concepto: 'Juego de cuchillas para la cizalla', base: 1275 },\n};\nconst DIA_MS = 24 * 3600 * 1000;\nconst r2 = (n) => Math.round(n * 100) / 100;\nconst eur = (n) => Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';\nconst limpiaIban = (s) => String(s ?? '').replace(/\\s+/g, '').toUpperCase();\nconst isoD = (d) => d.toISOString().slice(0, 10);\nconst nombreDe = (nif) => PROVEEDORES[nif]?.nombre ?? SIN_FICHA[nif] ?? `Proveedor ${nif}`;\n\n// Vence a los días de plazo de la ficha (30 si no hay ficha) y se paga en la primera remesa (día 10 o 25) desde\n// el vencimiento, o desde hoy si el vencimiento ya pasó.\nfunction plazos(fecha, nif, hoy) {\n  const v = new Date(Date.parse(fecha + 'T00:00:00Z') + (PROVEEDORES[nif]?.plazo ?? 30) * DIA_MS);\n  let d = new Date(Math.max(v.getTime(), Date.parse(hoy + 'T00:00:00Z')));\n  while (![10, 25].includes(d.getUTCDate())) d = new Date(d.getTime() + DIA_MS);\n  return { vencimiento: isoD(v), fecha_pago: isoD(d) };\n}\n\n// Las cinco comprobaciones de contabilidad. `otras` son las facturas ya registradas que ve este visitante.\nfunction comprobar(f, otras) {\n  const p = PROVEEDORES[f.nif];\n  const c = [];\n  c.push({ nombre: 'Proveedor dado de alta', ok: !!p, detalle: p ? `${p.nombre} (${f.nif})` : `${nombreDe(f.nif)} (${f.nif}) no tiene ficha de proveedor` });\n\n  const esperado = r2(f.base * (1 + f.iva_pct / 100));\n  const cuadra = Math.abs(esperado - f.total) < 0.011;\n  c.push({ nombre: 'Base + IVA = total', ok: cuadra, detalle: cuadra\n    ? `${eur(f.base)} + ${f.iva_pct} % de IVA = ${eur(f.total)}`\n    : `${eur(f.base)} + ${f.iva_pct} % de IVA son ${eur(esperado)}, y la factura dice ${eur(f.total)}` });\n\n  const clave = (s) => String(s).trim().toUpperCase();\n  const dup = otras.find((o) => o.nif === f.nif && clave(o.numero) === clave(f.numero));\n  c.push({ nombre: 'No está duplicada', ok: !dup, detalle: dup\n    ? `La factura ${dup.numero} de este proveedor ya se registró el ${dup.fecha} (${String(dup.estado).toLowerCase()})`\n    : 'Número nuevo para este proveedor' });\n\n  const ped = PEDIDOS[f.pedido];\n  let okPed = false;\n  let detPed;\n  if (!f.pedido) detPed = 'La factura no indica ningún pedido de compra';\n  else if (!ped || ped.nif !== f.nif) detPed = `El pedido ${f.pedido} no es de este proveedor`;\n  else {\n    const usada = otras.find((o) => o.pedido === f.pedido && o.estado !== 'Rechazada');\n    const dif = r2(f.base - ped.base);\n    if (usada) detPed = `El pedido ${f.pedido} ya se facturó con la ${usada.numero}`;\n    else if (Math.abs(dif) > Math.max(1, ped.base * 0.005)) detPed = `El pedido ${f.pedido} es de ${eur(ped.base)} y la factura cobra ${eur(Math.abs(dif))} de ${dif > 0 ? 'más' : 'menos'}`;\n    else { okPed = true; detPed = `Pedido ${f.pedido}: ${ped.concepto}`; }\n  }\n  c.push({ nombre: 'Coincide con el pedido', ok: okPed, detalle: detPed });\n\n  const iban = limpiaIban(f.iban);\n  const okIban = !!p && iban === p.iban;\n  c.push({ nombre: 'Cuenta bancaria de la ficha', ok: okIban, detalle: !p\n    ? 'No hay ficha con la que comparar la cuenta'\n    : okIban ? `La cuenta termina en ${p.iban.slice(-4)}, como en la ficha`\n      : `Pide el pago en una cuenta que termina en ${iban.slice(-4)} y la ficha dice ${p.iban.slice(-4)}: confirmar por teléfono antes de pagar` });\n  return c;\n}\n\n// Valida la factura que \"envía\" el visitante, le pasa las cinco comprobaciones y decide si se contabiliza\n// sola o queda retenida para que la revise contabilidad.\nconst b = $('Crear factura').first().json.body ?? {};\nconst todas = $input.all().map((i) => i.json).filter((r) => r.sid);\nconst fallo = (error, status = 400) => [{ json: { ok: false, status, error } }];\n\nconst sid = String(b.sid ?? '');\nif (!/^[a-f0-9]{32}$/.test(sid)) return fallo('Identificador de sesión no válido');\nconst propias = todas.filter((r) => r.sid === sid);\nconst demo = todas.filter((r) => r.sid === 'demo');\nif (propias.length >= 20) return fallo('Has llegado al máximo de 20 facturas de prueba. Se borran solas a las 2 horas.', 429);\nif (todas.length - demo.length >= 400) return fallo('La demo está llena ahora mismo. Vuelve dentro de un rato.', 429);\n\nconst nif = String(b.nif ?? '').trim().toUpperCase();\nif (!PROVEEDORES[nif] && !SIN_FICHA[nif]) return fallo('Proveedor: elige uno de la lista');\nconst numero = String(b.numero ?? '').replace(/[\\u0000-\\u001f\\u007f]/g, ' ').trim().slice(0, 20);\nif (!numero) return fallo('Número de factura: escríbelo');\nconst hoy = $now.setZone('Europe/Madrid').toFormat('yyyy-MM-dd');\nconst fecha = String(b.fecha ?? '');\nif (!/^\\d{4}-\\d{2}-\\d{2}$/.test(fecha) || Number.isNaN(Date.parse(fecha + 'T00:00:00Z'))) return fallo('Fecha: formato AAAA-MM-DD');\nif (fecha > hoy) return fallo('La fecha de la factura no puede ser posterior a hoy.');\nif ((Date.parse(hoy) - Date.parse(fecha)) / DIA_MS > 120) return fallo('La demo admite facturas de los últimos 120 días.');\nconst pedido = String(b.pedido ?? '');\nif (pedido && !PEDIDOS[pedido]) return fallo('Pedido: elige uno de la lista o \"Sin pedido\"');\nconst base = r2(Number(b.base));\nif (!Number.isFinite(base) || base <= 0 || base > 1000000) return fallo('Base imponible: un importe mayor que 0');\nconst iva_pct = Number(b.iva_pct);\nif (![21, 10, 4].includes(iva_pct)) return fallo('IVA: elige 21, 10 o 4 %');\nconst total = r2(Number(b.total));\nif (!Number.isFinite(total) || total <= 0 || total > 2000000) return fallo('Total: un importe mayor que 0');\nconst iban = limpiaIban(b.iban);\nif (!/^[A-Z]{2}\\d{2}[0-9A-Z]{11,30}$/.test(iban)) return fallo('Cuenta bancaria: escribe un IBAN (por ejemplo, ES91 2100 0418 4502 0005 1332)');\n\nconst f = { nif, numero, pedido, base, iva_pct, total, iban };\nconst comprobaciones = comprobar(f, demo.concat(propias));\nconst fallos = comprobaciones.filter((c) => !c.ok);\nconst estado = fallos.length ? 'Pendiente de revisar' : 'Contabilizada';\nconst p = plazos(fecha, nif, hoy);\n\nreturn [{ json: { ok: true, fila: {\n  sid, proveedor: nombreDe(nif), nif, numero, fecha, pedido, concepto: PEDIDOS[pedido]?.concepto ?? 'Sin pedido',\n  base, iva_pct, cuota_iva: r2(total - base), total, iban,\n  vencimiento: p.vencimiento, fecha_pago: estado === 'Contabilizada' ? p.fecha_pago : '',\n  estado, incidencias: fallos.map((c) => c.detalle).join('; '),\n  comprobaciones: JSON.stringify(comprobaciones), decidido_en: '', creado_ms: Date.now(),\n} } }];\n"
+      },
+      "id": "c2c1b53c-bdb2-4630-adee-71b770365a17",
+      "name": "Comprobar factura",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "0e3724ed-50b9-423c-a58c-c53929173075",
+      "name": "¿Válida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $json.fila }];"
+      },
+      "id": "14c6720d-5571-445c-b70f-b1dee00f96dd",
+      "name": "Extraer fila",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "facturas_demo"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {}
+      },
+      "id": "7322c8ad-5aae-4d4f-8d45-7ff1a7818683",
+      "name": "Guardar factura demo",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const PUBLICAS = ['id', 'proveedor', 'nif', 'numero', 'fecha', 'pedido', 'concepto', 'base', 'iva_pct', 'cuota_iva',\n  'total', 'vencimiento', 'fecha_pago', 'estado', 'incidencias', 'decidido_en'];\n\n// Devuelve la factura registrada y el correo que el buzón de facturas mandaría a contabilidad,\n// con el resultado de cada comprobación. En la demo no sale ningún correo.\nconst r = $('Guardar factura demo').first().json;\nconst factura = { tuya: true };\nfor (const k of PUBLICAS) factura[k] = r[k];\nconst comprobaciones = JSON.parse(r.comprobaciones || '[]');\n\nconst esc = (s) => String(s ?? '').replace(/[&<>\"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c]));\nconst eur = (n) => Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';\nconst fecha = (s) => (s ? s.split('-').reverse().join('/') : '');\nconst corto = r.proveedor.replace(/,? S\\.[LA]\\.$/, '');\nconst n = comprobaciones.filter((c) => !c.ok).length;\nconst asunto = n\n  ? `⚠ Factura retenida · ${corto} ${r.numero} · ${eur(r.total)} · ${n} ${n === 1 ? 'incidencia' : 'incidencias'}`\n  : `Factura contabilizada · ${corto} ${r.numero} · ${eur(r.total)} · pago el ${fecha(r.fecha_pago)}`;\nconst fila = (k, v) => `<tr><td style=\"padding:3px 12px 3px 0;color:#555\">${k}</td><td style=\"padding:3px 0\"><b>${v}</b></td></tr>`;\nconst check = (c) => `<tr><td style=\"padding:3px 8px 3px 0;color:${c.ok ? '#067647' : '#b42318'};font-weight:bold\">${c.ok ? '✓' : '✗'}</td>`\n  + `<td style=\"padding:3px 0\"><b>${esc(c.nombre)}</b><br><span style=\"color:#555\">${esc(c.detalle)}</span></td></tr>`;\nconst html = `<div style=\"font-family:Arial,sans-serif;font-size:14px;color:#222\">\n${n ? `<p style=\"padding:10px;background:#fef3f2;border-left:4px solid #b42318\"><b>Factura retenida:</b> no se pagará hasta que alguien de contabilidad la revise.</p>`\n    : `<p style=\"padding:10px;background:#ecfdf3;border-left:4px solid #067647\"><b>Todo cuadra:</b> apuntada en el libro de facturas recibidas y programada para pago.</p>`}\n<table>\n${fila('Proveedor', `${esc(r.proveedor)} · ${esc(r.nif)}`)}\n${fila('Factura', `${esc(r.numero)} del ${fecha(r.fecha)}`)}\n${fila('Pedido', r.pedido ? `${esc(r.pedido)} · ${esc(r.concepto)}` : 'Sin pedido')}\n${fila('Importe', `${eur(r.base)} + ${r.iva_pct} % IVA (${eur(r.cuota_iva)}) = ${eur(r.total)}`)}\n${fila('Vencimiento', fecha(r.vencimiento))}\n${r.fecha_pago ? fila('Pago previsto', `${fecha(r.fecha_pago)} (remesa de los días 10 y 25)`) : ''}\n</table>\n<p style=\"margin:14px 0 4px\"><b>Comprobaciones</b></p>\n<table>${comprobaciones.map(check).join('')}</table>\n<p style=\"color:#888;font-size:12px\">Leída del PDF adjunto por el buzón de facturas · n8n</p>\n</div>`;\n\nreturn [{ json: { ok: true, factura, comprobaciones, correo: { de: 'Buzón de facturas', para: 'Contabilidad', asunto, html } } }];\n"
+      },
+      "id": "c6cfce20-9252-4693-9983-2eff9341af2d",
+      "name": "Preparar respuesta (crear)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          },
+          "responseCode": 200
+        }
+      },
+      "id": "e0384c0d-6405-482b-bc0e-4e6745eac770",
+      "name": "Responder creada",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1760,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, error: $json.error } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          },
+          "responseCode": "={{ $json.status }}"
+        }
+      },
+      "id": "07f704ce-941e-4321-acdb-3fe8afecdba5",
+      "name": "Responder error (crear)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1100,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "demo-api/factura-decision",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "d5ec288b-17b4-4ad4-af4d-7e2e0a51172c",
+      "name": "Decidir factura",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        600
+      ],
+      "webhookId": "97a65108-16bc-596c-80c4-a3f332e27204"
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "facturas_demo",
+        "columns": {
+          "column": [
+            {
+              "name": "sid",
+              "type": "string"
+            },
+            {
+              "name": "proveedor",
+              "type": "string"
+            },
+            {
+              "name": "nif",
+              "type": "string"
+            },
+            {
+              "name": "numero",
+              "type": "string"
+            },
+            {
+              "name": "fecha",
+              "type": "string"
+            },
+            {
+              "name": "pedido",
+              "type": "string"
+            },
+            {
+              "name": "concepto",
+              "type": "string"
+            },
+            {
+              "name": "base",
+              "type": "number"
+            },
+            {
+              "name": "iva_pct",
+              "type": "number"
+            },
+            {
+              "name": "cuota_iva",
+              "type": "number"
+            },
+            {
+              "name": "total",
+              "type": "number"
+            },
+            {
+              "name": "iban",
+              "type": "string"
+            },
+            {
+              "name": "vencimiento",
+              "type": "string"
+            },
+            {
+              "name": "fecha_pago",
+              "type": "string"
+            },
+            {
+              "name": "estado",
+              "type": "string"
+            },
+            {
+              "name": "incidencias",
+              "type": "string"
+            },
+            {
+              "name": "comprobaciones",
+              "type": "string"
+            },
+            {
+              "name": "decidido_en",
+              "type": "string"
+            },
+            {
+              "name": "creado_ms",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "id": "49a8b292-7135-4b18-b0c6-2f4578d7f4ce",
+      "name": "Asegurar tabla (decidir)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "facturas_demo"
+        },
+        "matchType": "allConditions",
+        "returnAll": true
+      },
+      "id": "92ff449a-3310-4d13-8c80-e5ff06a45f87",
+      "name": "Leer facturas (decidir)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        600
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Datos maestros inventados: fichas de proveedor (con la cuenta bancaria registrada) y pedidos de compra.\nconst PROVEEDORES = {\n  B48123456: { nombre: 'Aceros del Norte, S.L.', iban: 'ES9121000418450200051332', plazo: 60 },\n  A46234567: { nombre: 'Bobinas Levante, S.A.', iban: 'ES6000491500051234567892', plazo: 60 },\n  B50345678: { nombre: 'Transportes Ebro, S.L.', iban: 'ES1720852066623456789011', plazo: 30 },\n  B28456789: { nombre: 'Suministros Industriales Gil, S.L.', iban: 'ES3001820815200201234567', plazo: 30 },\n  B26567890: { nombre: 'Mantenimiento Técnico Arnedo, S.L.', iban: 'ES4521003915102200123456', plazo: 30 },\n};\n// Proveedores que pueden enviar facturas pero no tienen ficha (no están dados de alta).\nconst SIN_FICHA = { B31678901: 'Talleres Ribera, S.L.' };\nconst PEDIDOS = {\n  'PC-2026-0412': { nif: 'B48123456', concepto: 'Bobina de acero galvanizado 1,5 mm (12 t)', base: 10680 },\n  'PC-2026-0415': { nif: 'A46234567', concepto: 'Bobina prelacada RAL 9002 (8 t)', base: 9120 },\n  'PC-2026-0418': { nif: 'B50345678', concepto: 'Portes de octubre (14 viajes)', base: 2380 },\n  'PC-2026-0421': { nif: 'B28456789', concepto: 'EPIs y guantes anticorte', base: 845.6 },\n  'PC-2026-0423': { nif: 'B26567890', concepto: 'Cambio de rodamientos de la Perfiladora 2', base: 1940 },\n  'PC-2026-0426': { nif: 'B48123456', concepto: 'Fleje de acero 0,8 mm (5 t)', base: 4350 },\n  'PC-2026-0427': { nif: 'B48123456', concepto: 'Chapa lisa 2 mm (3 t)', base: 2910 },\n  'PC-2026-0430': { nif: 'B28456789', concepto: 'Juego de cuchillas para la cizalla', base: 1275 },\n};\nconst DIA_MS = 24 * 3600 * 1000;\nconst r2 = (n) => Math.round(n * 100) / 100;\nconst eur = (n) => Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';\nconst limpiaIban = (s) => String(s ?? '').replace(/\\s+/g, '').toUpperCase();\nconst isoD = (d) => d.toISOString().slice(0, 10);\nconst nombreDe = (nif) => PROVEEDORES[nif]?.nombre ?? SIN_FICHA[nif] ?? `Proveedor ${nif}`;\n\n// Vence a los días de plazo de la ficha (30 si no hay ficha) y se paga en la primera remesa (día 10 o 25) desde\n// el vencimiento, o desde hoy si el vencimiento ya pasó.\nfunction plazos(fecha, nif, hoy) {\n  const v = new Date(Date.parse(fecha + 'T00:00:00Z') + (PROVEEDORES[nif]?.plazo ?? 30) * DIA_MS);\n  let d = new Date(Math.max(v.getTime(), Date.parse(hoy + 'T00:00:00Z')));\n  while (![10, 25].includes(d.getUTCDate())) d = new Date(d.getTime() + DIA_MS);\n  return { vencimiento: isoD(v), fecha_pago: isoD(d) };\n}\n\n// Las cinco comprobaciones de contabilidad. `otras` son las facturas ya registradas que ve este visitante.\nfunction comprobar(f, otras) {\n  const p = PROVEEDORES[f.nif];\n  const c = [];\n  c.push({ nombre: 'Proveedor dado de alta', ok: !!p, detalle: p ? `${p.nombre} (${f.nif})` : `${nombreDe(f.nif)} (${f.nif}) no tiene ficha de proveedor` });\n\n  const esperado = r2(f.base * (1 + f.iva_pct / 100));\n  const cuadra = Math.abs(esperado - f.total) < 0.011;\n  c.push({ nombre: 'Base + IVA = total', ok: cuadra, detalle: cuadra\n    ? `${eur(f.base)} + ${f.iva_pct} % de IVA = ${eur(f.total)}`\n    : `${eur(f.base)} + ${f.iva_pct} % de IVA son ${eur(esperado)}, y la factura dice ${eur(f.total)}` });\n\n  const clave = (s) => String(s).trim().toUpperCase();\n  const dup = otras.find((o) => o.nif === f.nif && clave(o.numero) === clave(f.numero));\n  c.push({ nombre: 'No está duplicada', ok: !dup, detalle: dup\n    ? `La factura ${dup.numero} de este proveedor ya se registró el ${dup.fecha} (${String(dup.estado).toLowerCase()})`\n    : 'Número nuevo para este proveedor' });\n\n  const ped = PEDIDOS[f.pedido];\n  let okPed = false;\n  let detPed;\n  if (!f.pedido) detPed = 'La factura no indica ningún pedido de compra';\n  else if (!ped || ped.nif !== f.nif) detPed = `El pedido ${f.pedido} no es de este proveedor`;\n  else {\n    const usada = otras.find((o) => o.pedido === f.pedido && o.estado !== 'Rechazada');\n    const dif = r2(f.base - ped.base);\n    if (usada) detPed = `El pedido ${f.pedido} ya se facturó con la ${usada.numero}`;\n    else if (Math.abs(dif) > Math.max(1, ped.base * 0.005)) detPed = `El pedido ${f.pedido} es de ${eur(ped.base)} y la factura cobra ${eur(Math.abs(dif))} de ${dif > 0 ? 'más' : 'menos'}`;\n    else { okPed = true; detPed = `Pedido ${f.pedido}: ${ped.concepto}`; }\n  }\n  c.push({ nombre: 'Coincide con el pedido', ok: okPed, detalle: detPed });\n\n  const iban = limpiaIban(f.iban);\n  const okIban = !!p && iban === p.iban;\n  c.push({ nombre: 'Cuenta bancaria de la ficha', ok: okIban, detalle: !p\n    ? 'No hay ficha con la que comparar la cuenta'\n    : okIban ? `La cuenta termina en ${p.iban.slice(-4)}, como en la ficha`\n      : `Pide el pago en una cuenta que termina en ${iban.slice(-4)} y la ficha dice ${p.iban.slice(-4)}: confirmar por teléfono antes de pagar` });\n  return c;\n}\n\n// Comprueba que la factura existe, es del visitante y está pendiente de revisar, y calcula el estado nuevo.\n// Si se aprueba, se paga a la cuenta de la ficha, nunca a la que venga en la factura.\nconst b = $('Decidir factura').first().json.body ?? {};\nconst fallo = (error, status = 400) => [{ json: { ok: false, status, error } }];\n\nconst sid = String(b.sid ?? '');\nif (!/^[a-f0-9]{32}$/.test(sid)) return fallo('Identificador de sesión no válido');\nconst id = Number(b.id);\nif (!Number.isInteger(id) || id < 1) return fallo('Factura no válida');\nif (!['pagar', 'rechazar'].includes(b.decision)) return fallo('Decisión no válida');\n\nconst r = $input.all().map((i) => i.json).find((x) => x.sid === sid && Number(x.id) === id);\nif (!r) return fallo('No se encuentra esa factura. Las de prueba se borran a las 2 horas; las de ejemplo no se pueden cambiar.', 404);\nif (r.estado !== 'Pendiente de revisar') return fallo(`Esa factura ya está ${String(r.estado).toLowerCase()}.`, 409);\n\nconst ahora = $now.setZone('Europe/Madrid');\nconst estado = b.decision === 'pagar' ? 'Contabilizada' : 'Rechazada';\nconst fecha_pago = estado === 'Contabilizada' ? plazos(r.fecha, r.nif, ahora.toFormat('yyyy-MM-dd')).fecha_pago : '';\nconst decidido_en = ahora.toFormat('yyyy-MM-dd HH:mm');\nreturn [{ json: { ok: true, id, sid, estado, fecha_pago, decidido_en, fila: { ...r, estado, fecha_pago, decidido_en },\n  iban_ficha: PROVEEDORES[r.nif]?.iban ?? '' } }];\n"
+      },
+      "id": "f7fb50f5-f79d-40c8-94de-f24650541b4c",
+      "name": "Comprobar decisión",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "91d89572-229a-4b18-b049-97ec8511375d",
+      "name": "¿Se puede decidir?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "facturas_demo"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            },
+            {
+              "keyName": "sid",
+              "condition": "eq",
+              "keyValue": "={{ $json.sid }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "estado": "={{ $json.estado }}",
+            "fecha_pago": "={{ $json.fecha_pago }}",
+            "decidido_en": "={{ $json.decidido_en }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "ee95cd5e-8a5e-41bb-b26b-634d622d3d82",
+      "name": "Actualizar factura",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        520
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const PUBLICAS = ['id', 'proveedor', 'nif', 'numero', 'fecha', 'pedido', 'concepto', 'base', 'iva_pct', 'cuota_iva',\n  'total', 'vencimiento', 'fecha_pago', 'estado', 'incidencias', 'decidido_en'];\n\n// Devuelve la factura ya decidida y el correo que contabilidad mandaría al proveedor.\nconst d = $('Comprobar decisión').first().json;\nconst r = d.fila;\nconst factura = { tuya: true };\nfor (const k of PUBLICAS) factura[k] = r[k];\n\nconst esc = (s) => String(s ?? '').replace(/[&<>\"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c]));\nconst eur = (n) => Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';\nconst fecha = (s) => (s ? s.split('-').reverse().join('/') : '');\nconst cuerpo = r.estado === 'Contabilizada'\n  ? `<p>Hemos registrado su factura <b>${esc(r.numero)}</b> por <b>${eur(r.total)}</b>.</p>\n<p>Se pagará por transferencia el <b>${fecha(r.fecha_pago)}</b>${d.iban_ficha ? ` a la cuenta que figura en nuestra ficha, terminada en ${esc(d.iban_ficha.slice(-4))}` : ''}.</p>`\n  : `<p>No podemos tramitar su factura <b>${esc(r.numero)}</b> por ${eur(r.total)}:</p>\n<ul>${String(r.incidencias).split('; ').filter(Boolean).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>\n<p>Por favor, envíen una factura rectificativa o llámennos para aclararlo.</p>`;\nconst html = `<div style=\"font-family:Arial,sans-serif;font-size:14px;color:#1d2430\">\n<p>Buenos días:</p>${cuerpo}\n<p>Un saludo,<br>Administración</p>\n<p style=\"color:#5b6676\">Mensaje automático de la demo de contabilidad. Todos los datos son inventados.</p></div>`;\nconst asunto = `Su factura ${r.numero}: ${r.estado === 'Contabilizada' ? `pago el ${fecha(r.fecha_pago)}` : 'no se puede tramitar'}`;\n\nreturn [{ json: { ok: true, factura, correo: { de: 'Contabilidad', para: r.proveedor, asunto, html } } }];\n"
+      },
+      "id": "c1cb5438-857b-44f0-a72f-f0a977028f54",
+      "name": "Preparar respuesta (decidir)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          },
+          "responseCode": 200
+        }
+      },
+      "id": "e2d5179a-98fd-461e-adc8-484cd9d790dd",
+      "name": "Responder decidida",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1540,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, error: $json.error } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          },
+          "responseCode": "={{ $json.status }}"
+        }
+      },
+      "id": "f00ee973-88f8-442b-bf0e-0a6734d9242d",
+      "name": "Responder error (decidir)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1100,
+        680
+      ]
+    }
+  ],
+  "connections": {
+    "Listar facturas": {
+      "main": [
+        [
+          {
+            "node": "Asegurar tabla (listar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar tabla (listar)": {
+      "main": [
+        [
+          {
+            "node": "Leer facturas (listar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer facturas (listar)": {
+      "main": [
+        [
+          {
+            "node": "Filtrar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar": {
+      "main": [
+        [
+          {
+            "node": "Responder lista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear factura": {
+      "main": [
+        [
+          {
+            "node": "Asegurar tabla (crear)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar tabla (crear)": {
+      "main": [
+        [
+          {
+            "node": "Leer facturas (crear)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer facturas (crear)": {
+      "main": [
+        [
+          {
+            "node": "Comprobar factura",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comprobar factura": {
+      "main": [
+        [
+          {
+            "node": "¿Válida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Válida?": {
+      "main": [
+        [
+          {
+            "node": "Extraer fila",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder error (crear)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer fila": {
+      "main": [
+        [
+          {
+            "node": "Guardar factura demo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar factura demo": {
+      "main": [
+        [
+          {
+            "node": "Preparar respuesta (crear)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar respuesta (crear)": {
+      "main": [
+        [
+          {
+            "node": "Responder creada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decidir factura": {
+      "main": [
+        [
+          {
+            "node": "Asegurar tabla (decidir)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar tabla (decidir)": {
+      "main": [
+        [
+          {
+            "node": "Leer facturas (decidir)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer facturas (decidir)": {
+      "main": [
+        [
+          {
+            "node": "Comprobar decisión",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comprobar decisión": {
+      "main": [
+        [
+          {
+            "node": "¿Se puede decidir?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Se puede decidir?": {
+      "main": [
+        [
+          {
+            "node": "Actualizar factura",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder error (decidir)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar factura": {
+      "main": [
+        [
+          {
+            "node": "Preparar respuesta (decidir)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar respuesta (decidir)": {
+      "main": [
+        [
+          {
+            "node": "Responder decidida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid"
+  },
+  "pinData": {}
+}

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>Prueba la automatización · demo</title>
-<meta name="description" content="Prueba en un minuto, sin registrarte, cómo se automatizan el parte de fin de turno y las vacaciones de una pyme: formulario en el móvil, correo al responsable y hoja de Excel.">
+<meta name="description" content="Prueba en un minuto, sin registrarte, cómo se automatizan el parte de fin de turno, las vacaciones y las facturas de proveedores de una pyme: formulario, correo al responsable y hoja de Excel.">
 <style>
   /* Siempre en claro: es lo que ve a diario quien trabaja con su correo y con Excel. */
   :root {
@@ -40,7 +40,7 @@
   .chip svg { width: 14px; height: 14px; color: var(--good); }
 
   /* Elegir trámite */
-  .elige { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+  .elige { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
   .opcion { display: flex; gap: 14px; align-items: flex-start; text-align: left; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--line-strong); background: var(--panel); cursor: pointer; }
   .opcion:hover { border-color: var(--accent); }
   .opcion[aria-selected="true"] { border: 2px solid var(--accent); padding: 13px 15px; background: var(--accent-soft); }
@@ -190,6 +190,7 @@
 
   @media (max-width: 900px) {
     .escena { grid-template-columns: 1fr; }
+    .elige { grid-template-columns: 1fr; }
     .movil { position: static; background: transparent; padding: 0; box-shadow: none; border-radius: 0; }
     .pantalla { border-radius: var(--radius); border: 1px solid var(--line-strong); }
   }
@@ -225,6 +226,10 @@
     <button type="button" class="opcion" role="tab" id="tab-ausencias" aria-controls="escena-ausencias" data-e="ausencias">
       <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M9 15l2 2 4-4"/></svg></span>
       <span><b>Vacaciones y permisos</b><span>Un empleado pide días. La responsable los aprueba con un clic y todo queda apuntado.</span></span>
+    </button>
+    <button type="button" class="opcion" role="tab" id="tab-facturas" aria-controls="escena-facturas" data-e="facturas">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h8M9 17h5"/></svg></span>
+      <span><b>Facturas de proveedores</b><span>Llega una factura. Se comprueba sola contra el pedido y la ficha del proveedor, y solo avisa si algo no cuadra.</span></span>
     </button>
   </div>
 
@@ -363,12 +368,76 @@
     </div>
   </section>
 
+  <!-- ============ Facturas de proveedores ============ -->
+  <section class="escena" id="escena-facturas" role="tabpanel" aria-labelledby="tab-facturas" hidden>
+    <div>
+      <p class="zona-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>La factura que envía el proveedor</p>
+      <div class="movil"><div class="pantalla">
+        <div class="form-cab"><h3>Enviar factura</h3><small>Ahora eres el proveedor. Prueba a cambiar el importe o la cuenta bancaria.</small></div>
+        <form id="form-facturas" novalidate>
+          <div class="bloque">
+            <label for="f-nif">Proveedor</label>
+            <select id="f-nif" name="nif">
+              <option value="B48123456">Aceros del Norte, S.L.</option>
+              <option value="A46234567">Bobinas Levante, S.A.</option>
+              <option value="B50345678">Transportes Ebro, S.L.</option>
+              <option value="B28456789">Suministros Industriales Gil, S.L.</option>
+              <option value="B26567890">Mantenimiento Técnico Arnedo, S.L.</option>
+              <option value="B31678901">Talleres Ribera, S.L. (sin dar de alta)</option>
+            </select>
+          </div>
+          <div class="bloque dos">
+            <div><label for="f-numero">Nº de factura</label><input type="text" id="f-numero" name="numero" maxlength="20" autocomplete="off" required></div>
+            <div><label for="f-fecha">Fecha</label><input type="date" id="f-fecha" name="fecha" required></div>
+          </div>
+          <div class="bloque"><label for="f-pedido">Pedido de compra</label><select id="f-pedido" name="pedido"></select></div>
+          <div class="bloque">
+            <div class="dos">
+              <div><label for="f-base">Base (€)</label><input type="number" id="f-base" name="base" inputmode="decimal" min="0" step="0.01" required></div>
+              <div><label for="f-total">Total (€)</label><input type="number" id="f-total" name="total" inputmode="decimal" min="0" step="0.01" required></div>
+            </div>
+            <span class="etq" id="et-iva">IVA</span>
+            <div class="opciones" role="radiogroup" aria-labelledby="et-iva">
+              <label><input type="radio" name="iva_pct" value="21" checked>21 %</label>
+              <label><input type="radio" name="iva_pct" value="10">10 %</label>
+              <label><input type="radio" name="iva_pct" value="4">4 %</label>
+            </div>
+            <div class="vivo" id="vivo-facturas" aria-live="polite"></div>
+          </div>
+          <div class="bloque"><label for="f-iban">Cuenta para el pago (IBAN)</label><input type="text" id="f-iban" name="iban" maxlength="42" autocomplete="off" spellcheck="false" required></div>
+          <div class="error" role="alert" hidden></div>
+          <button class="enviar" type="submit">Enviar factura</button>
+        </form>
+      </div></div>
+    </div>
+
+    <div class="oficina">
+      <div>
+        <p class="zona-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>En el correo de contabilidad</p>
+        <div class="ventana">
+          <div class="mail-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><b>Correo</b><span class="cuenta">Contabilidad y proveedor</span></div>
+          <div class="buzon" aria-live="polite"></div>
+        </div>
+      </div>
+      <div>
+        <p class="zona-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>En el libro de facturas recibidas</p>
+        <div class="ventana excel">
+          <div class="xl-bar"><span class="xl-ico" aria-hidden="true">X</span><span class="tit">libro-facturas-recibidas.xlsx</span><button type="button" class="descargar" data-hoja="facturas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>Descargar</button></div>
+          <div class="fx" aria-hidden="true"><span class="caja">A1</span><span class="fxi">fx</span><span class="fxv">Fecha</span></div>
+          <div class="hoja"><table><thead></thead><tbody></tbody></table></div>
+          <div class="xl-pie"><span class="tab">Facturas recibidas</span><span class="info">Tus facturas van al final, en azul; las retenidas se deciden desde aquí.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <details class="como">
     <summary>Cómo está hecho y qué pasa con tus datos</summary>
     <ul>
       <li>Funciona con n8n, una herramienta de automatización instalada en un servidor propio. Esta demo usa los mismos cálculos y las mismas plantillas de correo que la versión que enviaría correos de verdad.</li>
       <li>En una empresa, el formulario se abre desde el móvil con un enlace o un código QR, los correos llegan a las personas reales y la hoja puede ser un Excel o una hoja de Google compartida.</li>
       <li>Aquí no hay cuentas: tu navegador guarda un identificador aleatorio. Todos ven los mismos datos de ejemplo, que no se pueden cambiar; lo que envías tú solo lo ves tú y se borra a las 2 horas. Los nombres y las cifras son inventados.</li>
+      <li>En facturas, cada una pasa cinco comprobaciones: que el proveedor esté dado de alta, que base más IVA sea el total, que no esté duplicada, que coincida con su pedido de compra y que la cuenta bancaria sea la de la ficha (el cambio de cuenta es el fraude más habitual). Si todo cuadra, se apunta y se programa el pago para la remesa del día 10 o 25; si no, queda retenida. En el flujo real las facturas se leen del buzón de correo.</li>
       <li>En vacaciones se cuentan solo los días laborables (sin fines de semana ni festivos nacionales), con un saldo de 22 días al año, y se avisa si coincides con alguien de tu departamento. Las solicitudes que ya están en la hoja son de compañeros inventados.</li>
     </ul>
   </details>
@@ -408,8 +477,9 @@ async function pedir(ruta, cuerpo) {
 }
 
 // ---------- Escenas y pasos ----------
-const progreso = { turnos: 0, ausencias: 0 };
-let escena = leer('informe-demo-pestana') === 'ausencias' ? 'ausencias' : 'turnos';
+const progreso = { turnos: 0, ausencias: 0, facturas: 0 };
+const ESCENAS = ['turnos', 'ausencias', 'facturas'];
+let escena = ESCENAS.includes(leer('informe-demo-pestana')) ? leer('informe-demo-pestana') : 'turnos';
 function pintarPasos() {
   const n = progreso[escena];
   document.querySelectorAll('#pasos li').forEach((li, i) => { li.className = i < n ? 'hecho' : i === n ? 'ahora' : ''; });
@@ -430,7 +500,8 @@ document.querySelectorAll('.opcion').forEach((b) => {
   b.addEventListener('keydown', (ev) => {
     if (!['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(ev.key)) return;
     ev.preventDefault();
-    const otro = escena === 'turnos' ? 'ausencias' : 'turnos';
+    const paso = ['ArrowRight', 'ArrowDown'].includes(ev.key) ? 1 : ESCENAS.length - 1;
+    const otro = ESCENAS[(ESCENAS.indexOf(escena) + paso) % ESCENAS.length];
     abrir(otro);
     document.querySelector(`.opcion[data-e="${otro}"]`).focus();
   });
@@ -490,13 +561,14 @@ document.querySelectorAll('.descargar').forEach((b) => b.addEventListener('click
 }));
 
 // ---------- Correo: lista de mensajes y panel de lectura ----------
-const correos = { turnos: [], ausencias: [] };
+const correos = { turnos: [], ausencias: [], facturas: [] };
 const VACIO = {
   turnos: 'Envía el parte y el resumen llegará aquí al momento.',
   ausencias: 'Pide unos días y aquí llegará la solicitud, con los botones para aprobarla o rechazarla.',
+  facturas: 'Envía la factura y aquí llegará el resultado de las comprobaciones.',
 };
 const iniciales = (s) => String(s).split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
-const escenaDe = (sec) => (sec.id === 'escena-turnos' ? 'turnos' : 'ausencias');
+const escenaDe = (sec) => sec.id.replace('escena-', '');
 
 function recibirCorreo(sec, correo, extra = '') {
   const e = escenaDe(sec);
@@ -708,10 +780,148 @@ sA.addEventListener('click', async (e) => {
   }
 });
 
+// ---------- Facturas de proveedores ----------
+const sF = document.getElementById('escena-facturas');
+const fF = document.getElementById('form-facturas');
+// Mismas fichas y pedidos que el flujo (inventados). Talleres Ribera no tiene ficha.
+const PROV = {
+  B48123456: { iban: 'ES9121000418450200051332', pref: 'A-2026/', ficha: true },
+  A46234567: { iban: 'ES6000491500051234567892', pref: 'FV-26/', ficha: true },
+  B50345678: { iban: 'ES1720852066623456789011', pref: '2026-0', ficha: true },
+  B28456789: { iban: 'ES3001820815200201234567', pref: 'G-', ficha: true },
+  B26567890: { iban: 'ES4521003915102200123456', pref: 'MTA-', ficha: true },
+  B31678901: { iban: 'ES2830350012120123456789', pref: 'TR-', ficha: false },
+};
+const PED = {
+  'PC-2026-0412': { nif: 'B48123456', concepto: 'Bobina galvanizada 1,5 mm', base: 10680 },
+  'PC-2026-0415': { nif: 'A46234567', concepto: 'Bobina prelacada RAL 9002', base: 9120 },
+  'PC-2026-0418': { nif: 'B50345678', concepto: 'Portes de octubre', base: 2380 },
+  'PC-2026-0421': { nif: 'B28456789', concepto: 'EPIs y guantes', base: 845.6 },
+  'PC-2026-0423': { nif: 'B26567890', concepto: 'Rodamientos Perfiladora 2', base: 1940 },
+  'PC-2026-0426': { nif: 'B48123456', concepto: 'Fleje de acero 0,8 mm', base: 4350 },
+  'PC-2026-0427': { nif: 'B48123456', concepto: 'Chapa lisa 2 mm', base: 2910 },
+  'PC-2026-0430': { nif: 'B28456789', concepto: 'Cuchillas de la cizalla', base: 1275 },
+};
+const EUR = (n) => Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+const r2 = (n) => Math.round(n * 100) / 100;
+const limpiaIban = (s) => String(s || '').replace(/\s+/g, '').toUpperCase();
+const verIban = (s) => limpiaIban(s).replace(/(.{4})/g, '$1 ').trim();
+const ivaSel = () => Number(fF.querySelector('input[name="iva_pct"]:checked').value);
+let filasF = [];
+
+function rellenarPedidos() {
+  const usados = new Set(filasF.filter((f) => f.estado !== 'Rechazada').map((f) => f.pedido));
+  const lista = Object.entries(PED).filter(([, p]) => p.nif === fF.nif.value);
+  fF.pedido.innerHTML = lista.map(([k, p]) => `<option value="${k}">${k} · ${ESC(p.concepto)} · ${EUR(p.base)}${usados.has(k) ? ' (ya facturado)' : ''}</option>`).join('')
+    + '<option value="">Sin pedido</option>';
+  const abierto = lista.find(([k]) => !usados.has(k));
+  fF.pedido.value = abierto ? abierto[0] : '';
+}
+function cambiarProveedor() {
+  const p = PROV[fF.nif.value];
+  rellenarPedidos();
+  fF.iban.value = verIban(p.iban);
+  fF.numero.value = p.pref + String(100 + Math.floor(Math.random() * 900));
+  cambiarPedido();
+}
+function cambiarPedido() {
+  const p = PED[fF.pedido.value];
+  if (p) fF.base.value = p.base.toFixed(2);
+  calcularTotal();
+}
+function calcularTotal() {
+  fF.total.value = r2((Number(fF.base.value) || 0) * (1 + ivaSel() / 100)).toFixed(2);
+  vivoFacturas();
+}
+// Lo mismo que comprobará el flujo, salvo los duplicados: así se ve antes de enviar si la factura pasará sola.
+function vivoFacturas() {
+  const v = document.getElementById('vivo-facturas');
+  const base = Number(fF.base.value) || 0;
+  const total = Number(fF.total.value) || 0;
+  const esperado = r2(base * (1 + ivaSel() / 100));
+  const p = PROV[fF.nif.value];
+  const ped = PED[fF.pedido.value];
+  const avisos = [];
+  if (!p.ficha) avisos.push('el proveedor no está dado de alta');
+  if (Math.abs(esperado - total) > 0.011) avisos.push(`el total no cuadra (base + IVA son ${EUR(esperado)})`);
+  if (!ped) avisos.push('no indica pedido de compra');
+  else if (Math.abs(base - ped.base) > Math.max(1, ped.base * 0.005)) avisos.push(`el pedido es de ${EUR(ped.base)}`);
+  if (p.ficha && limpiaIban(fF.iban.value) !== p.iban) avisos.push('la cuenta no es la de la ficha del proveedor');
+  v.className = 'vivo ' + (avisos.length ? 'aviso' : '');
+  v.innerHTML = `<div class="cifra">${EUR(total)}</div>
+    <p>${avisos.length ? `<b>Contabilidad la retendrá:</b> ${ESC(avisos.join('; '))}.` : 'Cuadra con el pedido y con la ficha del proveedor: se contabilizará sola.'}</p>`;
+}
+fF.addEventListener('input', (e) => {
+  if (['base', 'iva_pct'].includes(e.target.name)) calcularTotal();
+  else vivoFacturas();
+});
+fF.addEventListener('change', (e) => {
+  if (e.target.name === 'nif') cambiarProveedor();
+  if (e.target.name === 'pedido') cambiarPedido();
+});
+fF.fecha.value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+cambiarProveedor();
+
+const botonesHojaF = (id) => `<button type="button" class="btn si" data-decidir="pagar" data-id="${id}">Aprobar pago</button><button type="button" class="btn" data-decidir="rechazar" data-id="${id}">Rechazar</button>`;
+const botonesCorreoF = (id) => `<div class="decidir" data-pendiente="${id}">${botonesHojaF(id)}<small>Pruébalo: ahora eres de contabilidad. Si apruebas el pago, se paga a la cuenta de la ficha, nunca a la que venga en la factura.</small></div>`;
+const COL_F = [
+  { t: 'Fecha', html: (f) => celda(f.fecha) },
+  { t: 'Proveedor', html: (f) => celda(f.proveedor) },
+  { t: 'Nº factura', html: (f) => celda(f.numero) },
+  { t: 'Pedido', html: (f) => celda(f.pedido || 'Sin pedido') },
+  { t: 'Base', html: (f) => `<td class="num" data-v="${f.base}">${ESC(EUR(f.base))}</td>` },
+  { t: 'IVA', html: (f) => celda(f.iva_pct + ' %', 'num') },
+  { t: 'Total', html: (f) => `<td class="num" data-v="${f.total}">${ESC(EUR(f.total))}</td>` },
+  { t: 'Estado', html: (f) => f.estado === 'Pendiente de revisar' && f.tuya ? `<td data-v="Pendiente de revisar">Pendiente ${botonesHojaF(f.id)}</td>` : celda(f.estado, { Contabilizada: 'bien', Rechazada: 'mal' }[f.estado] || '') },
+  { t: 'Pago previsto', html: (f) => celda(f.fecha_pago) },
+  { t: 'Incidencias', html: (f) => `<td class="corta mal" data-v="${ESC(f.incidencias)}">${ESC(f.incidencias)}</td>` },
+];
+async function cargarFacturas(nuevo) {
+  filasF = (await pedir(`/facturas?sid=${SID}`)).filas || [];
+  filasF.forEach((f) => { f.__clave = f.id; });
+  if (filasF.some((f) => f.tuya) && !progreso.facturas) progreso.facturas = 3;
+  pintarHoja(sF, COL_F, filasF, nuevo);
+  const pedido = fF.pedido.value;
+  rellenarPedidos();
+  if (nuevo !== undefined) fF.pedido.value = pedido;
+  else cambiarPedido();
+  if (escena === 'facturas') pintarPasos();
+}
+
+fF.addEventListener('submit', (e) => {
+  e.preventDefault();
+  enviar(fF, async (datos) => {
+    const j = await pedir('/factura', datos);
+    progreso.facturas = 3;
+    recibirCorreo(sF, j.correo, j.factura.estado === 'Pendiente de revisar' ? botonesCorreoF(j.factura.id) : '');
+    await cargarFacturas(j.factura.id);
+  });
+});
+
+sF.addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-decidir]');
+  if (!b) return;
+  const id = Number(b.dataset.id);
+  mostrarError(sF, '');
+  sF.querySelectorAll('[data-decidir]').forEach((x) => { x.disabled = true; });
+  try {
+    const j = await pedir('/factura-decision', { id, decision: b.dataset.decidir });
+    correos.facturas.forEach((c) => { if (c.extra.includes(`data-pendiente="${id}"`)) c.extra = ''; });
+    recibirCorreo(sF, j.correo, `<p class="nota-envio">La decisión queda apuntada en el libro y el proveedor recibe este correo al momento.</p>`);
+    await cargarFacturas(j.factura.id);
+  } catch (err) {
+    mostrarError(sF, err.message);
+  } finally {
+    sF.querySelectorAll('[data-decidir]').forEach((x) => { x.disabled = false; });
+  }
+});
+
 abrirCorreo(sT, 0);
 abrirCorreo(sA, 0);
 cargarTurnos().catch((err) => mostrarError(sT, err.message));
 cargarAusencias().catch((err) => mostrarError(sA, err.message));
+abrirCorreo(sF, 0);
+cargarFacturas().catch((err) => mostrarError(sF, err.message));
 </script>
 </body>
 </html>
