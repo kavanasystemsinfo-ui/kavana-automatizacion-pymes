@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>Prueba la automatización · demo</title>
-<meta name="description" content="Prueba en un minuto, sin registrarte, cómo se automatizan el parte de fin de turno, las vacaciones y las facturas de proveedores de una pyme: formulario, correo al responsable y hoja de Excel.">
+<meta name="description" content="Prueba en un minuto, sin registrarte, cómo se automatizan el parte de fin de turno, las vacaciones, las facturas de proveedores y los contactos de clientes de una pyme: formulario, correo al responsable y hoja de Excel.">
 <style>
   /* Siempre en claro: es lo que ve a diario quien trabaja con su correo y con Excel. */
   :root {
@@ -40,7 +40,7 @@
   .chip svg { width: 14px; height: 14px; color: var(--good); }
 
   /* Elegir trámite */
-  .elige { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .elige { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
   .opcion { display: flex; gap: 14px; align-items: flex-start; text-align: left; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--line-strong); background: var(--panel); cursor: pointer; }
   .opcion:hover { border-color: var(--accent); }
   .opcion[aria-selected="true"] { border: 2px solid var(--accent); padding: 13px 15px; background: var(--accent-soft); }
@@ -105,6 +105,7 @@
   .vivo.aviso .cifra { color: var(--ink); }
   .vivo.neutro { background: var(--panel); border-color: var(--line); }
   .vivo.neutro .cifra { color: var(--ink); }
+  #vivo-leads .medidor::after { left: 70%; }
   .enviar { min-height: 48px; border: 0; border-radius: 6px; background: var(--accent); color: var(--accent-ink); font-size: 16px; font-weight: 600; cursor: pointer; }
   .enviar[disabled] { opacity: .65; cursor: progress; }
   .error { padding: 10px 12px; border-radius: 6px; background: var(--bad-soft); color: var(--bad); font-size: 14px; }
@@ -190,7 +191,7 @@
 
   @media (max-width: 900px) {
     .escena { grid-template-columns: 1fr; }
-    .elige { grid-template-columns: 1fr; }
+    .elige { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .movil { position: static; background: transparent; padding: 0; box-shadow: none; border-radius: 0; }
     .pantalla { border-radius: var(--radius); border: 1px solid var(--line-strong); }
   }
@@ -230,6 +231,10 @@
     <button type="button" class="opcion" role="tab" id="tab-facturas" aria-controls="escena-facturas" data-e="facturas">
       <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h8M9 17h5"/></svg></span>
       <span><b>Facturas de proveedores</b><span>Llega una factura. Se comprueba sola contra el pedido y la ficha del proveedor, y solo avisa si algo no cuadra.</span></span>
+    </button>
+    <button type="button" class="opcion" role="tab" id="tab-leads" aria-controls="escena-leads" data-e="leads">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15 9a4 4 0 010 6M18 6a8 8 0 010 12"/></svg></span>
+      <span><b>Contactos de clientes</b><span>Alguien pide presupuesto en la web. Se puntúa, va al comercial de su zona y nadie se queda sin respuesta.</span></span>
     </button>
   </div>
 
@@ -431,6 +436,56 @@
     </div>
   </section>
 
+  <!-- ============ Contactos de clientes ============ -->
+  <section class="escena" id="escena-leads" role="tabpanel" aria-labelledby="tab-leads" hidden>
+    <div>
+      <p class="zona-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></svg>El formulario de contacto de la web</p>
+      <div class="movil"><div class="pantalla">
+        <div class="form-cab"><h3>Pide presupuesto</h3><small>Ahora eres un cliente potencial. No pongas datos reales: vale con los de ejemplo.</small></div>
+        <form id="form-leads" novalidate>
+          <div class="bloque dos">
+            <div><label for="l-contacto">Nombre</label><input type="text" id="l-contacto" name="contacto" maxlength="40" value="Lucía Romero" autocomplete="off" required></div>
+            <div><label for="l-empresa">Empresa</label><input type="text" id="l-empresa" name="empresa" maxlength="60" value="Cubiertas del Sur, S.L." autocomplete="off" required></div>
+          </div>
+          <div class="bloque dos">
+            <div><label for="l-provincia">Provincia</label><select id="l-provincia" name="provincia"><optgroup label="Norte"><option>Asturias</option><option>Bizkaia</option><option>Cantabria</option><option>Gipuzkoa</option><option>La Rioja</option><option>Navarra</option></optgroup><optgroup label="Este"><option>Barcelona</option><option>Castellón</option><option>Tarragona</option><option>Valencia</option><option>Zaragoza</option></optgroup><optgroup label="Centro y Sur"><option>Córdoba</option><option>Madrid</option><option selected>Málaga</option><option>Sevilla</option><option>Toledo</option><option>Valladolid</option></optgroup></select></div>
+            <div><label for="l-sector">Sector</label><select id="l-sector" name="sector"><option selected>Construcción</option><option>Estructuras metálicas</option><option>Naves agrícolas</option><option>Distribución de materiales</option><option>Otro</option></select></div>
+          </div>
+          <div class="bloque">
+            <label for="l-producto">¿Qué necesita?</label><select id="l-producto" name="producto"><option>Perfiles para pladur</option><option selected>Chapa perfilada para cubiertas</option><option>Fleje de acero</option><option>Corte a medida</option><option>Otro producto</option></select>
+            <div class="dos">
+              <div><label for="l-volumen">Volumen</label><select id="l-volumen" name="volumen"><option>Menos de 1.000 m al mes</option><option selected>De 1.000 a 10.000 m al mes</option><option>Más de 10.000 m al mes</option></select></div>
+              <div><label for="l-plazo">Plazo</label><select id="l-plazo" name="plazo"><option selected>Urgente (menos de 2 semanas)</option><option>Este trimestre</option><option>Solo pido información</option></select></div>
+            </div>
+            <div class="vivo" id="vivo-leads" aria-live="polite"></div>
+          </div>
+          <div class="bloque"><label for="l-mensaje">Mensaje <span class="ayuda">(opcional)</span></label><textarea id="l-mensaje" name="mensaje" maxlength="300" rows="2">Necesitamos chapa para la cubierta de dos naves.</textarea></div>
+          <div class="error" role="alert" hidden></div>
+          <button class="enviar" type="submit">Enviar consulta</button>
+        </form>
+      </div></div>
+    </div>
+
+    <div class="oficina">
+      <div>
+        <p class="zona-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Correos que se envían</p>
+        <div class="ventana">
+          <div class="mail-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><b>Correo</b><span class="cuenta">Cliente, comercial y marketing</span></div>
+          <div class="buzon" aria-live="polite"></div>
+        </div>
+      </div>
+      <div>
+        <p class="zona-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>En la hoja de leads (el CRM)</p>
+        <div class="ventana excel">
+          <div class="xl-bar"><span class="xl-ico" aria-hidden="true">X</span><span class="tit">leads-comerciales.xlsx</span><button type="button" class="descargar" data-hoja="leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>Descargar</button></div>
+          <div class="fx" aria-hidden="true"><span class="caja">A1</span><span class="fxi">fx</span><span class="fxv">Recibido</span></div>
+          <div class="hoja"><table><thead></thead><tbody></tbody></table></div>
+          <div class="xl-pie"><span class="tab">Leads</span><span class="info">Tus contactos van al final, en azul; los abiertos se marcan desde aquí.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <details class="como">
     <summary>Cómo está hecho y qué pasa con tus datos</summary>
     <ul>
@@ -438,6 +493,7 @@
       <li>En una empresa, el formulario se abre desde el móvil con un enlace o un código QR, los correos llegan a las personas reales y la hoja puede ser un Excel o una hoja de Google compartida.</li>
       <li>Aquí no hay cuentas: tu navegador guarda un identificador aleatorio. Todos ven los mismos datos de ejemplo, que no se pueden cambiar; lo que envías tú solo lo ves tú y se borra a las 2 horas. Los nombres y las cifras son inventados.</li>
       <li>En facturas, cada una pasa cinco comprobaciones: que el proveedor esté dado de alta, que base más IVA sea el total, que no esté duplicada, que coincida con su pedido de compra y que la cuenta bancaria sea la de la ficha (el cambio de cuenta es el fraude más habitual). Si todo cuadra, se apunta y se programa el pago para la remesa del día 10 o 25; si no, queda retenida. En el flujo real las facturas se leen del buzón de correo.</li>
+      <li>En contactos, cada consulta se puntúa de 0 a 100 con reglas fijas, sin IA: producto (si lo fabricamos), volumen, plazo y sector. Con 70 o más es caliente y el comercial de la zona tiene 24 horas para llamar; entre 40 y 69, 3 días; por debajo, el contacto recibe el catálogo y entra en el boletín. Si nadie lo marca como contactado a tiempo, llega un recordatorio. Si la empresa ya tenía un contacto abierto, el nuevo va al mismo comercial.</li>
       <li>En vacaciones se cuentan solo los días laborables (sin fines de semana ni festivos nacionales), con un saldo de 22 días al año, y se avisa si coincides con alguien de tu departamento. Las solicitudes que ya están en la hoja son de compañeros inventados.</li>
     </ul>
   </details>
@@ -477,8 +533,8 @@ async function pedir(ruta, cuerpo) {
 }
 
 // ---------- Escenas y pasos ----------
-const progreso = { turnos: 0, ausencias: 0, facturas: 0 };
-const ESCENAS = ['turnos', 'ausencias', 'facturas'];
+const progreso = { turnos: 0, ausencias: 0, facturas: 0, leads: 0 };
+const ESCENAS = ['turnos', 'ausencias', 'facturas', 'leads'];
 let escena = ESCENAS.includes(leer('informe-demo-pestana')) ? leer('informe-demo-pestana') : 'turnos';
 function pintarPasos() {
   const n = progreso[escena];
@@ -561,11 +617,12 @@ document.querySelectorAll('.descargar').forEach((b) => b.addEventListener('click
 }));
 
 // ---------- Correo: lista de mensajes y panel de lectura ----------
-const correos = { turnos: [], ausencias: [], facturas: [] };
+const correos = { turnos: [], ausencias: [], facturas: [], leads: [] };
 const VACIO = {
   turnos: 'Envía el parte y el resumen llegará aquí al momento.',
   ausencias: 'Pide unos días y aquí llegará la solicitud, con los botones para aprobarla o rechazarla.',
   facturas: 'Envía la factura y aquí llegará el resultado de las comprobaciones.',
+  leads: 'Envía la consulta y aquí llegarán la respuesta al cliente y el aviso al comercial.',
 };
 const iniciales = (s) => String(s).split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
 const escenaDe = (sec) => sec.id.replace('escena-', '');
@@ -916,12 +973,100 @@ sF.addEventListener('click', async (e) => {
   }
 });
 
+// ---------- Contactos de clientes (leads) ----------
+const sL = document.getElementById('escena-leads');
+const fL = document.getElementById('form-leads');
+// Mismas reglas que el flujo: puntos por producto, volumen, plazo y sector; comercial por zona.
+const PTS = {
+  producto: { 'Perfiles para pladur': 40, 'Chapa perfilada para cubiertas': 40, 'Fleje de acero': 30, 'Corte a medida': 25, 'Otro producto': 0 },
+  volumen: { 'Menos de 1.000 m al mes': 5, 'De 1.000 a 10.000 m al mes': 20, 'Más de 10.000 m al mes': 30 },
+  plazo: { 'Urgente (menos de 2 semanas)': 20, 'Este trimestre': 12, 'Solo pido información': 3 },
+  sector: { 'Construcción': 10, 'Estructuras metálicas': 10, 'Naves agrícolas': 8, 'Distribución de materiales': 8, 'Otro': 4 },
+};
+const COMERCIAL = { Norte: 'Iker Zubia', Este: 'Laia Puig', 'Centro y Sur': 'Javier Ortega' };
+let filasL = [];
+
+function vivoLeads() {
+  const v = document.getElementById('vivo-leads');
+  const puntos = Object.keys(PTS).reduce((a, k) => a + (PTS[k][fL[k].value] || 0), 0);
+  const zona = fL.provincia.selectedOptions[0].parentElement.label;
+  const fuera = fL.producto.value === 'Otro producto';
+  const t = fuera ? 'Fuera de catálogo' : puntos >= 70 ? 'Caliente' : puntos >= 40 ? 'Templado' : 'Frío';
+  const que = {
+    Caliente: `${COMERCIAL[zona]} (zona ${zona}) recibirá un aviso para llamar en menos de 24 h.`,
+    Templado: `${COMERCIAL[zona]} (zona ${zona}) tendrá 3 días para llamar; si no, le llega un recordatorio.`,
+    'Frío': 'No se asigna llamada: el contacto recibe el catálogo y entra en el boletín.',
+    'Fuera de catálogo': 'No es algo que fabriquemos: respuesta amable y se descarta.',
+  }[t];
+  v.className = 'vivo ' + (t === 'Caliente' ? '' : t === 'Templado' ? 'aviso' : 'neutro');
+  v.innerHTML = `<div class="cifra">${puntos} puntos · ${t.toLowerCase()}</div>
+    <div class="medidor" aria-hidden="true"><i style="width:${puntos}%"></i></div>
+    <p>${ESC(que)}</p>`;
+}
+fL.addEventListener('input', vivoLeads);
+fL.addEventListener('change', vivoLeads);
+vivoLeads();
+
+const botonesHojaL = (id) => `<button type="button" class="btn si" data-decidir="contactado" data-id="${id}">Contactado</button><button type="button" class="btn" data-decidir="descartar" data-id="${id}">Descartar</button>`;
+const botonesCorreoL = (id) => `<div class="decidir" data-pendiente="${id}">${botonesHojaL(id)}<small>Pruébalo: ahora eres el comercial. Al marcarlo, se cancela el recordatorio.</small></div>`;
+const ABIERTO = (f) => f.estado === 'Nuevo' || f.estado === 'Recordatorio enviado';
+const COL_L = [
+  { t: 'Recibido', html: (f) => celda(f.fecha) },
+  { t: 'Empresa', html: (f) => celda(f.empresa) },
+  { t: 'Provincia', html: (f) => celda(f.provincia) },
+  { t: 'Producto', html: (f) => celda(f.producto) },
+  { t: 'Puntos', html: (f) => celda(f.puntos, 'num') },
+  { t: 'Temperatura', html: (f) => celda(f.temperatura, f.temperatura === 'Caliente' ? 'mal' : '') },
+  { t: 'Comercial', html: (f) => celda(f.estado === 'Nuevo' || f.estado === 'Recordatorio enviado' || f.estado === 'Contactado' ? f.comercial : '') },
+  { t: 'Estado', html: (f) => ABIERTO(f) && f.tuya ? `<td data-v="${ESC(f.estado)}">${ESC(f.estado)} ${botonesHojaL(f.id)}</td>` : celda(f.estado, { Contactado: 'bien', 'Recordatorio enviado': 'mal' }[f.estado] || '') },
+  { t: 'Llamar antes de', html: (f) => celda(f.llamar_antes) },
+  { t: 'Nota', html: (f) => `<td class="corta" data-v="${ESC(f.nota)}">${ESC(f.nota)}</td>` },
+];
+async function cargarLeads(nuevo) {
+  filasL = (await pedir(`/leads?sid=${SID}`)).filas || [];
+  filasL.forEach((f) => { f.__clave = f.id; });
+  if (filasL.some((f) => f.tuya) && !progreso.leads) progreso.leads = 3;
+  pintarHoja(sL, COL_L, filasL, nuevo);
+  if (escena === 'leads') pintarPasos();
+}
+
+fL.addEventListener('submit', (e) => {
+  e.preventDefault();
+  enviar(fL, async (datos) => {
+    const j = await pedir('/lead', datos);
+    progreso.leads = 3;
+    // Primero la respuesta al cliente; encima queda el aviso interno, que es el que tiene los botones.
+    j.correos.forEach((c, i) => recibirCorreo(sL, c, i === 1 && j.lead.estado === 'Nuevo' ? botonesCorreoL(j.lead.id) : ''));
+    await cargarLeads(j.lead.id);
+  });
+});
+
+sL.addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-decidir]');
+  if (!b) return;
+  const id = Number(b.dataset.id);
+  mostrarError(sL, '');
+  sL.querySelectorAll('[data-decidir]').forEach((x) => { x.disabled = true; });
+  try {
+    const j = await pedir('/lead-decision', { id, decision: b.dataset.decidir });
+    correos.leads.forEach((c) => { if (c.extra.includes(`data-pendiente="${id}"`)) c.extra = ''; });
+    recibirCorreo(sL, j.correo, `<p class="nota-envio">El estado queda apuntado en la hoja de leads.</p>`);
+    await cargarLeads(j.lead.id);
+  } catch (err) {
+    mostrarError(sL, err.message);
+  } finally {
+    sL.querySelectorAll('[data-decidir]').forEach((x) => { x.disabled = false; });
+  }
+});
+
 abrirCorreo(sT, 0);
 abrirCorreo(sA, 0);
 cargarTurnos().catch((err) => mostrarError(sT, err.message));
 cargarAusencias().catch((err) => mostrarError(sA, err.message));
 abrirCorreo(sF, 0);
 cargarFacturas().catch((err) => mostrarError(sF, err.message));
+abrirCorreo(sL, 0);
+cargarLeads().catch((err) => mostrarError(sL, err.message));
 </script>
 </body>
 </html>

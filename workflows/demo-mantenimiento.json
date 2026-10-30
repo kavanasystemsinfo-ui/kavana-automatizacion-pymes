@@ -361,11 +361,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2860,
+        3740,
         380
       ],
       "parameters": {
-        "jsCode": "\nreturn [{ json: { sembradas: $('Generar semilla').all().length, ausencias: $('Generar plantilla RRHH').all().length, facturas: $('Generar libro de facturas').all().length } }];\n"
+        "jsCode": "\nreturn [{ json: { sembradas: $('Generar semilla').all().length, ausencias: $('Generar plantilla RRHH').all().length, facturas: $('Generar libro de facturas').all().length, leads: $('Generar leads de ejemplo').all().length } }];\n"
       }
     },
     {
@@ -927,6 +927,314 @@
         },
         "options": {}
       }
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "leads_demo",
+        "columns": {
+          "column": [
+            {
+              "name": "sid",
+              "type": "string"
+            },
+            {
+              "name": "fecha",
+              "type": "string"
+            },
+            {
+              "name": "contacto",
+              "type": "string"
+            },
+            {
+              "name": "empresa",
+              "type": "string"
+            },
+            {
+              "name": "provincia",
+              "type": "string"
+            },
+            {
+              "name": "zona",
+              "type": "string"
+            },
+            {
+              "name": "comercial",
+              "type": "string"
+            },
+            {
+              "name": "sector",
+              "type": "string"
+            },
+            {
+              "name": "producto",
+              "type": "string"
+            },
+            {
+              "name": "volumen",
+              "type": "string"
+            },
+            {
+              "name": "plazo",
+              "type": "string"
+            },
+            {
+              "name": "mensaje",
+              "type": "string"
+            },
+            {
+              "name": "puntos",
+              "type": "number"
+            },
+            {
+              "name": "temperatura",
+              "type": "string"
+            },
+            {
+              "name": "desglose",
+              "type": "string"
+            },
+            {
+              "name": "estado",
+              "type": "string"
+            },
+            {
+              "name": "llamar_antes",
+              "type": "string"
+            },
+            {
+              "name": "nota",
+              "type": "string"
+            },
+            {
+              "name": "decidido_en",
+              "type": "string"
+            },
+            {
+              "name": "creado_ms",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "id": "644bbdd1-d35d-4cfc-8604-20b8e58eb712",
+      "name": "Asegurar tabla (purga leads)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "leads_demo"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "sid",
+              "condition": "neq",
+              "keyValue": "demo"
+            },
+            {
+              "keyName": "creado_ms",
+              "condition": "lt",
+              "keyValue": "={{ Date.now() - 2 * 3600 * 1000 }}"
+            }
+          ]
+        }
+      },
+      "id": "aed9633b-b2df-475d-a29e-f9864299d05c",
+      "name": "Borrar leads de más de 2 h",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "leads_demo",
+        "columns": {
+          "column": [
+            {
+              "name": "sid",
+              "type": "string"
+            },
+            {
+              "name": "fecha",
+              "type": "string"
+            },
+            {
+              "name": "contacto",
+              "type": "string"
+            },
+            {
+              "name": "empresa",
+              "type": "string"
+            },
+            {
+              "name": "provincia",
+              "type": "string"
+            },
+            {
+              "name": "zona",
+              "type": "string"
+            },
+            {
+              "name": "comercial",
+              "type": "string"
+            },
+            {
+              "name": "sector",
+              "type": "string"
+            },
+            {
+              "name": "producto",
+              "type": "string"
+            },
+            {
+              "name": "volumen",
+              "type": "string"
+            },
+            {
+              "name": "plazo",
+              "type": "string"
+            },
+            {
+              "name": "mensaje",
+              "type": "string"
+            },
+            {
+              "name": "puntos",
+              "type": "number"
+            },
+            {
+              "name": "temperatura",
+              "type": "string"
+            },
+            {
+              "name": "desglose",
+              "type": "string"
+            },
+            {
+              "name": "estado",
+              "type": "string"
+            },
+            {
+              "name": "llamar_antes",
+              "type": "string"
+            },
+            {
+              "name": "nota",
+              "type": "string"
+            },
+            {
+              "name": "decidido_en",
+              "type": "string"
+            },
+            {
+              "name": "creado_ms",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "id": "91f186dd-b33c-4402-90a5-6828e8bb821f",
+      "name": "Asegurar tabla (semilla leads)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2860,
+        380
+      ],
+      "executeOnce": true
+    },
+    {
+      "id": "3e9aed2a-21f9-41c6-aadf-5f1af097a44b",
+      "name": "Borrar los leads anteriores",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3080,
+        380
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "leads_demo"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "sid",
+              "condition": "eq",
+              "keyValue": "demo"
+            }
+          ]
+        }
+      },
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "id": "2358b256-cedd-4c4e-a154-90382d3224a4",
+      "name": "Generar leads de ejemplo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3300,
+        380
+      ],
+      "parameters": {
+        "jsCode": "// Reglas fijas de puntuación (sin IA) y reparto por zonas. Datos inventados.\nconst PRODUCTOS = { 'Perfiles para pladur': 40, 'Chapa perfilada para cubiertas': 40, 'Fleje de acero': 30, 'Corte a medida': 25, 'Otro producto': 0 };\nconst VOLUMENES = { 'Menos de 1.000 m al mes': 5, 'De 1.000 a 10.000 m al mes': 20, 'Más de 10.000 m al mes': 30 };\nconst PLAZOS = { 'Urgente (menos de 2 semanas)': 20, 'Este trimestre': 12, 'Solo pido información': 3 };\nconst SECTORES = { 'Construcción': 10, 'Estructuras metálicas': 10, 'Naves agrícolas': 8, 'Distribución de materiales': 8, 'Otro': 4 };\nconst ZONAS = {\n  Norte: { comercial: 'Iker Zubia', provincias: ['Asturias', 'Bizkaia', 'Cantabria', 'Gipuzkoa', 'La Rioja', 'Navarra'] },\n  Este: { comercial: 'Laia Puig', provincias: ['Barcelona', 'Castellón', 'Tarragona', 'Valencia', 'Zaragoza'] },\n  'Centro y Sur': { comercial: 'Javier Ortega', provincias: ['Córdoba', 'Madrid', 'Málaga', 'Sevilla', 'Toledo', 'Valladolid'] },\n};\nconst zonaDe = (provincia) => Object.entries(ZONAS).find(([, z]) => z.provincias.includes(provincia));\nconst ABIERTOS = ['Nuevo', 'Recordatorio enviado'];\n\n// Puntos de 0 a 100 y temperatura. Caliente: llamar en 24 h. Templado: en 3 días. Frío: al boletín, sin llamada.\nfunction puntuar(l) {\n  const desglose = [\n    { criterio: 'Producto', valor: l.producto, puntos: PRODUCTOS[l.producto] },\n    { criterio: 'Volumen', valor: l.volumen, puntos: VOLUMENES[l.volumen] },\n    { criterio: 'Plazo', valor: l.plazo, puntos: PLAZOS[l.plazo] },\n    { criterio: 'Sector', valor: l.sector, puntos: SECTORES[l.sector] },\n  ];\n  const puntos = desglose.reduce((a, d) => a + d.puntos, 0);\n  const temperatura = l.producto === 'Otro producto' ? 'Fuera de catálogo' : puntos >= 70 ? 'Caliente' : puntos >= 40 ? 'Templado' : 'Frío';\n  return { puntos, temperatura, desglose };\n}\nconst estadoInicial = (t) => ({ Caliente: 'Nuevo', Templado: 'Nuevo', 'Frío': 'Boletín', 'Fuera de catálogo': 'Descartado' }[t]);\nconst horasParaLlamar = (t) => ({ Caliente: 24, Templado: 72 }[t] ?? 0);\nconst clave = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/,?\\s*s\\.?\\s*[la]\\.?$/, '').replace(/[^a-z0-9]/g, '');\n\n// Leads de ejemplo de las dos últimas semanas, con fechas relativas a ahora y siempre los mismos para un mismo día.\n// Son comunes a todos los visitantes y de solo lectura. Se puntúan con las mismas reglas que los del visitante.\nconst ahora = $now.setZone('Europe/Madrid').startOf('hour');\nconst LEADS = [\n  // contacto, empresa, provincia, sector, producto, volumen, plazo, hace N horas, estado final (si ya lo tocó un comercial)\n  ['Rubén Calvo', 'Instalaciones Solares Tajo, S.L.', 'Toledo', 'Estructuras metálicas', 'Perfiles para pladur', 'De 1.000 a 10.000 m al mes', 'Urgente (menos de 2 semanas)', 220, 'Contactado'],\n  ['Marisa León', 'Reformas Guadalquivir, S.L.', 'Sevilla', 'Construcción', 'Corte a medida', 'Menos de 1.000 m al mes', 'Solo pido información', 190, 'Descartado'],\n  ['Andoni Etxeberria', 'Estructuras Cantábrico, S.A.', 'Cantabria', 'Estructuras metálicas', 'Fleje de acero', 'De 1.000 a 10.000 m al mes', 'Este trimestre', 140, 'Recordatorio enviado'],\n  ['Pilar Sanz', 'Carpintería Hermanos Sanz', 'Madrid', 'Otro', 'Otro producto', 'Menos de 1.000 m al mes', 'Solo pido información', 96],\n  ['Unai Goñi', 'Taller Mecánico Irati', 'Navarra', 'Otro', 'Corte a medida', 'Menos de 1.000 m al mes', 'Solo pido información', 70],\n  ['Vicent Ferrer', 'Almacenes Levante Construcción, S.L.', 'Valencia', 'Distribución de materiales', 'Perfiles para pladur', 'Menos de 1.000 m al mes', 'Solo pido información', 46],\n  ['Teresa Gallego', 'Hormigones y Cubiertas Duero, S.L.', 'Valladolid', 'Construcción', 'Chapa perfilada para cubiertas', 'Más de 10.000 m al mes', 'Urgente (menos de 2 semanas)', 26, 'Contactado'],\n  ['Jordi Bosch', 'Naves Agrícolas Ebro, S.L.', 'Zaragoza', 'Naves agrícolas', 'Chapa perfilada para cubiertas', 'De 1.000 a 10.000 m al mes', 'Este trimestre', 5],\n];\nreturn LEADS.map(([contacto, empresa, provincia, sector, producto, volumen, plazo, hace, final], i) => {\n  const zona = zonaDe(provincia);\n  const p = puntuar({ producto, volumen, plazo, sector });\n  const llega = ahora.minus({ hours: hace }).set({ minute: (i * 13) % 60 });\n  const horas = horasParaLlamar(p.temperatura);\n  const decidido = final && final !== 'Recordatorio enviado';\n  return { json: {\n    sid: 'demo', fecha: llega.toFormat('yyyy-MM-dd HH:mm'), contacto, empresa, provincia, zona: zona[0], comercial: zona[1].comercial,\n    sector, producto, volumen, plazo, mensaje: '', puntos: p.puntos, temperatura: p.temperatura, desglose: JSON.stringify(p.desglose),\n    estado: final ?? estadoInicial(p.temperatura), llamar_antes: horas ? llega.plus({ hours: horas }).toFormat('yyyy-MM-dd HH:mm') : '',\n    nota: final === 'Recordatorio enviado' ? 'Sin llamada en plazo: recordatorio al comercial y aviso a dirección' : '',\n    decidido_en: decidido ? llega.plus({ hours: 3 + i }).toFormat('yyyy-MM-dd HH:mm') : '', creado_ms: 0,\n  } };\n});\n"
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "fbb9ce0e-6b38-4c2a-9dc1-1e78b5f22ab0",
+      "name": "Guardar leads de ejemplo",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3520,
+        380
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "leads_demo"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -1035,6 +1343,11 @@
             "node": "Asegurar tabla (purga facturas)",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Asegurar tabla (purga leads)",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -1128,6 +1441,61 @@
       ]
     },
     "Guardar libro de facturas": {
+      "main": [
+        [
+          {
+            "node": "Asegurar tabla (semilla leads)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar tabla (purga leads)": {
+      "main": [
+        [
+          {
+            "node": "Borrar leads de más de 2 h",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar tabla (semilla leads)": {
+      "main": [
+        [
+          {
+            "node": "Borrar los leads anteriores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Borrar los leads anteriores": {
+      "main": [
+        [
+          {
+            "node": "Generar leads de ejemplo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar leads de ejemplo": {
+      "main": [
+        [
+          {
+            "node": "Guardar leads de ejemplo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar leads de ejemplo": {
       "main": [
         [
           {

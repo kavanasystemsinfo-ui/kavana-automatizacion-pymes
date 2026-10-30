@@ -1,0 +1,1001 @@
+{
+  "id": "DemoLeadsApi0001",
+  "name": "Demo pública · Leads",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "demo-api/leads",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "f2f13455-e3b2-45e1-9a24-6b13b1700293",
+      "name": "Listar leads",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "73746af7-4fb5-5dc7-accb-e07d64d0989f"
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "leads_demo",
+        "columns": {
+          "column": [
+            {
+              "name": "sid",
+              "type": "string"
+            },
+            {
+              "name": "fecha",
+              "type": "string"
+            },
+            {
+              "name": "contacto",
+              "type": "string"
+            },
+            {
+              "name": "empresa",
+              "type": "string"
+            },
+            {
+              "name": "provincia",
+              "type": "string"
+            },
+            {
+              "name": "zona",
+              "type": "string"
+            },
+            {
+              "name": "comercial",
+              "type": "string"
+            },
+            {
+              "name": "sector",
+              "type": "string"
+            },
+            {
+              "name": "producto",
+              "type": "string"
+            },
+            {
+              "name": "volumen",
+              "type": "string"
+            },
+            {
+              "name": "plazo",
+              "type": "string"
+            },
+            {
+              "name": "mensaje",
+              "type": "string"
+            },
+            {
+              "name": "puntos",
+              "type": "number"
+            },
+            {
+              "name": "temperatura",
+              "type": "string"
+            },
+            {
+              "name": "desglose",
+              "type": "string"
+            },
+            {
+              "name": "estado",
+              "type": "string"
+            },
+            {
+              "name": "llamar_antes",
+              "type": "string"
+            },
+            {
+              "name": "nota",
+              "type": "string"
+            },
+            {
+              "name": "decidido_en",
+              "type": "string"
+            },
+            {
+              "name": "creado_ms",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "id": "64f80cd1-ff1a-4d38-9725-491540d2809c",
+      "name": "Asegurar tabla (listar)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "leads_demo"
+        },
+        "matchType": "allConditions",
+        "returnAll": true
+      },
+      "id": "29f69470-0946-447d-b90d-d88dd4d3a6f7",
+      "name": "Leer leads (listar)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const PUBLICAS = ['id', 'fecha', 'contacto', 'empresa', 'provincia', 'zona', 'comercial', 'sector', 'producto', 'volumen',\n  'plazo', 'puntos', 'temperatura', 'estado', 'llamar_antes', 'nota', 'decidido_en'];\n\n// Devuelve los leads de ejemplo (comunes a todos, de solo lectura) y debajo los que ha enviado el visitante,\n// en el orden en que los envió y marcados como suyos. Nunca expone el sid.\nconst q = $('Listar leads').first().json.query ?? {};\nconst sid = /^[a-f0-9]{32}$/.test(String(q.sid ?? '')) ? String(q.sid) : null;\nconst todas = $input.all().map((i) => i.json);\nconst publica = (r) => {\n  const f = { tuya: r.sid !== 'demo' };\n  for (const k of PUBLICAS) f[k] = r[k];\n  return f;\n};\nconst demo = todas.filter((r) => r.sid === 'demo').sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));\nconst propias = sid === null ? [] : todas\n  .filter((r) => r.sid === sid)\n  .sort((a, b) => Number(a.creado_ms) - Number(b.creado_ms));\nreturn [{ json: { filas: demo.concat(propias).map(publica) } }];\n"
+      },
+      "id": "128bb873-a024-4ab1-b5e3-439de5ad2f2b",
+      "name": "Filtrar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      },
+      "id": "db3b91b7-4966-4a90-a956-5531008096fe",
+      "name": "Responder lista",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "demo-api/lead",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "fb3a7bfd-999d-4651-903c-7ee7afb3db77",
+      "name": "Crear lead",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "52f5ef81-dddc-5906-a601-f0b09abffda3"
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "leads_demo",
+        "columns": {
+          "column": [
+            {
+              "name": "sid",
+              "type": "string"
+            },
+            {
+              "name": "fecha",
+              "type": "string"
+            },
+            {
+              "name": "contacto",
+              "type": "string"
+            },
+            {
+              "name": "empresa",
+              "type": "string"
+            },
+            {
+              "name": "provincia",
+              "type": "string"
+            },
+            {
+              "name": "zona",
+              "type": "string"
+            },
+            {
+              "name": "comercial",
+              "type": "string"
+            },
+            {
+              "name": "sector",
+              "type": "string"
+            },
+            {
+              "name": "producto",
+              "type": "string"
+            },
+            {
+              "name": "volumen",
+              "type": "string"
+            },
+            {
+              "name": "plazo",
+              "type": "string"
+            },
+            {
+              "name": "mensaje",
+              "type": "string"
+            },
+            {
+              "name": "puntos",
+              "type": "number"
+            },
+            {
+              "name": "temperatura",
+              "type": "string"
+            },
+            {
+              "name": "desglose",
+              "type": "string"
+            },
+            {
+              "name": "estado",
+              "type": "string"
+            },
+            {
+              "name": "llamar_antes",
+              "type": "string"
+            },
+            {
+              "name": "nota",
+              "type": "string"
+            },
+            {
+              "name": "decidido_en",
+              "type": "string"
+            },
+            {
+              "name": "creado_ms",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "id": "96daec34-d6c2-49b7-a356-7fcf52f7fd0d",
+      "name": "Asegurar tabla (crear)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "leads_demo"
+        },
+        "matchType": "allConditions",
+        "returnAll": true
+      },
+      "id": "b94ecca1-a952-4fbb-8770-82efa89b5166",
+      "name": "Leer leads (crear)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        300
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Reglas fijas de puntuación (sin IA) y reparto por zonas. Datos inventados.\nconst PRODUCTOS = { 'Perfiles para pladur': 40, 'Chapa perfilada para cubiertas': 40, 'Fleje de acero': 30, 'Corte a medida': 25, 'Otro producto': 0 };\nconst VOLUMENES = { 'Menos de 1.000 m al mes': 5, 'De 1.000 a 10.000 m al mes': 20, 'Más de 10.000 m al mes': 30 };\nconst PLAZOS = { 'Urgente (menos de 2 semanas)': 20, 'Este trimestre': 12, 'Solo pido información': 3 };\nconst SECTORES = { 'Construcción': 10, 'Estructuras metálicas': 10, 'Naves agrícolas': 8, 'Distribución de materiales': 8, 'Otro': 4 };\nconst ZONAS = {\n  Norte: { comercial: 'Iker Zubia', provincias: ['Asturias', 'Bizkaia', 'Cantabria', 'Gipuzkoa', 'La Rioja', 'Navarra'] },\n  Este: { comercial: 'Laia Puig', provincias: ['Barcelona', 'Castellón', 'Tarragona', 'Valencia', 'Zaragoza'] },\n  'Centro y Sur': { comercial: 'Javier Ortega', provincias: ['Córdoba', 'Madrid', 'Málaga', 'Sevilla', 'Toledo', 'Valladolid'] },\n};\nconst zonaDe = (provincia) => Object.entries(ZONAS).find(([, z]) => z.provincias.includes(provincia));\nconst ABIERTOS = ['Nuevo', 'Recordatorio enviado'];\n\n// Puntos de 0 a 100 y temperatura. Caliente: llamar en 24 h. Templado: en 3 días. Frío: al boletín, sin llamada.\nfunction puntuar(l) {\n  const desglose = [\n    { criterio: 'Producto', valor: l.producto, puntos: PRODUCTOS[l.producto] },\n    { criterio: 'Volumen', valor: l.volumen, puntos: VOLUMENES[l.volumen] },\n    { criterio: 'Plazo', valor: l.plazo, puntos: PLAZOS[l.plazo] },\n    { criterio: 'Sector', valor: l.sector, puntos: SECTORES[l.sector] },\n  ];\n  const puntos = desglose.reduce((a, d) => a + d.puntos, 0);\n  const temperatura = l.producto === 'Otro producto' ? 'Fuera de catálogo' : puntos >= 70 ? 'Caliente' : puntos >= 40 ? 'Templado' : 'Frío';\n  return { puntos, temperatura, desglose };\n}\nconst estadoInicial = (t) => ({ Caliente: 'Nuevo', Templado: 'Nuevo', 'Frío': 'Boletín', 'Fuera de catálogo': 'Descartado' }[t]);\nconst horasParaLlamar = (t) => ({ Caliente: 24, Templado: 72 }[t] ?? 0);\nconst clave = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/,?\\s*s\\.?\\s*[la]\\.?$/, '').replace(/[^a-z0-9]/g, '');\n\n// Valida el formulario de contacto del visitante, puntúa el lead, se lo asigna al comercial de su zona\n// y fija hasta cuándo hay que llamarle.\nconst b = $('Crear lead').first().json.body ?? {};\nconst todas = $input.all().map((i) => i.json).filter((r) => r.sid);\nconst fallo = (error, status = 400) => [{ json: { ok: false, status, error } }];\n\nconst sid = String(b.sid ?? '');\nif (!/^[a-f0-9]{32}$/.test(sid)) return fallo('Identificador de sesión no válido');\nconst propias = todas.filter((r) => r.sid === sid);\nconst demo = todas.filter((r) => r.sid === 'demo');\nif (propias.length >= 20) return fallo('Has llegado al máximo de 20 contactos de prueba. Se borran solos a las 2 horas.', 429);\nif (todas.length - demo.length >= 400) return fallo('La demo está llena ahora mismo. Vuelve dentro de un rato.', 429);\n\nconst texto = (v, max) => String(v ?? '').replace(/[\\u0000-\\u001f\\u007f]/g, ' ').trim().slice(0, max);\nconst contacto = texto(b.contacto, 40);\nif (!contacto) return fallo('Nombre: escribe un nombre (vale uno inventado)');\nconst empresa = texto(b.empresa, 60);\nif (!empresa) return fallo('Empresa: escribe un nombre (vale uno inventado)');\nconst zona = zonaDe(b.provincia);\nif (!zona) return fallo('Provincia: elige una de la lista');\nif (!(b.sector in SECTORES)) return fallo('Sector: elige uno de la lista');\nif (!(b.producto in PRODUCTOS)) return fallo('Producto: elige uno de la lista');\nif (!(b.volumen in VOLUMENES)) return fallo('Volumen: elige uno de la lista');\nif (!(b.plazo in PLAZOS)) return fallo('Plazo: elige uno de la lista');\nconst mensaje = texto(b.mensaje, 300);\n\nconst p = puntuar(b);\nconst ahora = $now.setZone('Europe/Madrid');\nconst horas = horasParaLlamar(p.temperatura);\n// Si la empresa ya tiene un lead abierto, el nuevo va al mismo comercial y se avisa de que es repetido.\nconst previo = demo.concat(propias).find((r) => clave(r.empresa) === clave(empresa) && ABIERTOS.includes(r.estado));\nconst comercial = previo ? previo.comercial : zona[1].comercial;\nconst nota = previo ? `Ya escribió el ${String(previo.fecha).slice(0, 10)}: lo lleva ${previo.comercial}` : '';\n\nreturn [{ json: { ok: true, fila: {\n  sid, fecha: ahora.toFormat('yyyy-MM-dd HH:mm'), contacto, empresa, provincia: b.provincia, zona: zona[0], comercial,\n  sector: b.sector, producto: b.producto, volumen: b.volumen, plazo: b.plazo, mensaje,\n  puntos: p.puntos, temperatura: p.temperatura, desglose: JSON.stringify(p.desglose),\n  estado: estadoInicial(p.temperatura), llamar_antes: horas ? ahora.plus({ hours: horas }).toFormat('yyyy-MM-dd HH:mm') : '',\n  nota, decidido_en: '', creado_ms: Date.now(),\n} } }];\n"
+      },
+      "id": "ba3cb728-3ff9-4174-ad77-d36d322470aa",
+      "name": "Puntuar y asignar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b44f423b-50fb-4255-afe3-7aed7dd8bb7a",
+      "name": "¿Válida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $json.fila }];"
+      },
+      "id": "3b73a81c-1aaa-4af7-aead-2427932fd0f0",
+      "name": "Extraer fila",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "leads_demo"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {}
+      },
+      "id": "f12ad940-d984-43c8-be48-6ff720856a27",
+      "name": "Guardar lead demo",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const PUBLICAS = ['id', 'fecha', 'contacto', 'empresa', 'provincia', 'zona', 'comercial', 'sector', 'producto', 'volumen',\n  'plazo', 'puntos', 'temperatura', 'estado', 'llamar_antes', 'nota', 'decidido_en'];\n\n// Devuelve el lead registrado y los correos que mandaría el flujo real: la respuesta automática al cliente\n// y el aviso interno (al comercial si hay que llamar, a marketing si va al boletín). En la demo no sale ninguno.\nconst r = $('Guardar lead demo').first().json;\nconst lead = { tuya: true };\nfor (const k of PUBLICAS) lead[k] = r[k];\nconst desglose = JSON.parse(r.desglose || '[]');\n\nconst esc = (s) => String(s ?? '').replace(/[&<>\"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c]));\nconst cuando = (s) => { const [d, h] = String(s).split(' '); return `${d.split('-').reverse().join('/')} a las ${h}`; };\nconst nombre = esc(r.contacto.split(' ')[0]);\nconst caja = (s) => `<div style=\"font-family:Arial,sans-serif;font-size:14px;color:#1d2430\">${s}\n<p style=\"color:#5b6676\">Mensaje automático de la demo de marketing. Todos los datos son inventados.</p></div>`;\n\nconst respuesta = {\n  Caliente: `<p>Hola ${nombre}:</p><p>Gracias por escribirnos. Hemos recibido su consulta sobre <b>${esc(r.producto.toLowerCase())}</b>.</p>\n<p>${esc(r.comercial)}, su comercial para la zona ${esc(r.zona)}, le llamará antes del <b>${cuando(r.llamar_antes)}</b> para preparar la oferta.</p>`,\n  Templado: `<p>Hola ${nombre}:</p><p>Gracias por escribirnos. Le adjuntamos el catálogo de <b>${esc(r.producto.toLowerCase())}</b> con medidas y plazos de entrega.</p>\n<p>${esc(r.comercial)}, su comercial para la zona ${esc(r.zona)}, se pondrá en contacto con usted en los próximos días.</p>`,\n  'Frío': `<p>Hola ${nombre}:</p><p>Gracias por escribirnos. Le adjuntamos nuestro catálogo general.</p>\n<p>Si más adelante tiene un pedido en firme, conteste a este correo y le pasamos con su comercial.</p>`,\n  'Fuera de catálogo': `<p>Hola ${nombre}:</p><p>Gracias por escribirnos. Lo que nos pide no está entre lo que fabricamos: trabajamos perfiles, chapa perfilada, fleje y corte a medida de acero.</p>\n<p>Si necesita alguno de estos productos, estaremos encantados de ayudarle.</p>`,\n}[r.temperatura];\nconst cliente = { de: 'Ventas', para: `${r.contacto} · ${r.empresa}`, asunto: `Hemos recibido su consulta, ${r.contacto.split(' ')[0]}`, html: caja(respuesta + '<p>Un saludo,<br>Departamento comercial</p>') };\n\nconst fila = (k, v) => `<tr><td style=\"padding:3px 12px 3px 0;color:#555\">${k}</td><td style=\"padding:3px 0\"><b>${v}</b></td></tr>`;\nconst datos = `<table>\n${fila('Empresa', `${esc(r.empresa)} · ${esc(r.provincia)}`)}\n${fila('Contacto', esc(r.contacto))}\n${fila('Sector', esc(r.sector))}\n${fila('Pide', `${esc(r.producto)} · ${esc(r.volumen)} · ${esc(r.plazo.toLowerCase())}`)}\n${r.mensaje ? fila('Mensaje', esc(r.mensaje)) : ''}\n${r.nota ? fila('Ojo', esc(r.nota)) : ''}\n</table>\n<p style=\"margin:14px 0 4px\"><b>Puntuación: ${r.puntos} de 100 (${esc(r.temperatura.toLowerCase())})</b></p>\n<table>${desglose.map((d) => `<tr><td style=\"padding:2px 12px 2px 0;color:#555\">${esc(d.criterio)}</td><td style=\"padding:2px 12px 2px 0\">${esc(d.valor)}</td><td style=\"padding:2px 0;text-align:right\"><b>+${d.puntos}</b></td></tr>`).join('')}</table>`;\n\nlet interno = null;\nif (r.estado === 'Nuevo') {\n  const caliente = r.temperatura === 'Caliente';\n  interno = {\n    de: 'CRM', para: r.comercial,\n    asunto: `${caliente ? '⚠ Lead caliente' : 'Lead nuevo'} · ${r.empresa} · llamar antes del ${cuando(r.llamar_antes)}`,\n    html: caja(`<p>${caliente ? '<b>Lead caliente:</b> llama hoy si puedes.' : 'Lead templado: llama esta semana.'} Si no lo marcas como contactado antes del ${cuando(r.llamar_antes)}, te llegará un recordatorio y se avisará a dirección comercial.</p>${datos}`),\n  };\n} else if (r.estado === 'Boletín') {\n  interno = { de: 'CRM', para: 'Marketing', asunto: `Lead frío al boletín · ${r.empresa} · ${r.puntos} puntos`,\n    html: caja(`<p>No llega a 40 puntos: no se asigna llamada. Queda en la lista del boletín mensual.</p>${datos}`) };\n}\n\nreturn [{ json: { ok: true, lead, correos: interno ? [cliente, interno] : [cliente] } }];\n"
+      },
+      "id": "104fe2bf-d944-42e1-931b-4ad71642cb85",
+      "name": "Preparar respuesta (crear)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          },
+          "responseCode": 200
+        }
+      },
+      "id": "2484e7ea-bc2f-4043-8892-09751c32217b",
+      "name": "Responder creada",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1760,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, error: $json.error } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          },
+          "responseCode": "={{ $json.status }}"
+        }
+      },
+      "id": "1ddeac73-2894-46fa-985c-e9217962768e",
+      "name": "Responder error (crear)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1100,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "demo-api/lead-decision",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "7a3c0630-5d0c-4b40-a462-bffc32ba112f",
+      "name": "Decidir lead",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        600
+      ],
+      "webhookId": "8c5cfa17-9642-55b3-b676-8fbf274d4fbb"
+    },
+    {
+      "parameters": {
+        "resource": "table",
+        "operation": "create",
+        "tableName": "leads_demo",
+        "columns": {
+          "column": [
+            {
+              "name": "sid",
+              "type": "string"
+            },
+            {
+              "name": "fecha",
+              "type": "string"
+            },
+            {
+              "name": "contacto",
+              "type": "string"
+            },
+            {
+              "name": "empresa",
+              "type": "string"
+            },
+            {
+              "name": "provincia",
+              "type": "string"
+            },
+            {
+              "name": "zona",
+              "type": "string"
+            },
+            {
+              "name": "comercial",
+              "type": "string"
+            },
+            {
+              "name": "sector",
+              "type": "string"
+            },
+            {
+              "name": "producto",
+              "type": "string"
+            },
+            {
+              "name": "volumen",
+              "type": "string"
+            },
+            {
+              "name": "plazo",
+              "type": "string"
+            },
+            {
+              "name": "mensaje",
+              "type": "string"
+            },
+            {
+              "name": "puntos",
+              "type": "number"
+            },
+            {
+              "name": "temperatura",
+              "type": "string"
+            },
+            {
+              "name": "desglose",
+              "type": "string"
+            },
+            {
+              "name": "estado",
+              "type": "string"
+            },
+            {
+              "name": "llamar_antes",
+              "type": "string"
+            },
+            {
+              "name": "nota",
+              "type": "string"
+            },
+            {
+              "name": "decidido_en",
+              "type": "string"
+            },
+            {
+              "name": "creado_ms",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "createIfNotExists": true
+        }
+      },
+      "id": "26e66dad-7edb-48aa-924f-f86785a03257",
+      "name": "Asegurar tabla (decidir)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "leads_demo"
+        },
+        "matchType": "allConditions",
+        "returnAll": true
+      },
+      "id": "2ddad121-68ee-4641-899e-87881dbb5052",
+      "name": "Leer leads (decidir)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        600
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Comprueba que el lead existe, es del visitante y sigue abierto, y calcula el estado nuevo.\nconst b = $('Decidir lead').first().json.body ?? {};\nconst fallo = (error, status = 400) => [{ json: { ok: false, status, error } }];\n\nconst sid = String(b.sid ?? '');\nif (!/^[a-f0-9]{32}$/.test(sid)) return fallo('Identificador de sesión no válido');\nconst id = Number(b.id);\nif (!Number.isInteger(id) || id < 1) return fallo('Lead no válido');\nif (!['contactado', 'descartar'].includes(b.decision)) return fallo('Decisión no válida');\n\nconst r = $input.all().map((i) => i.json).find((x) => x.sid === sid && Number(x.id) === id);\nif (!r) return fallo('No se encuentra ese contacto. Los de prueba se borran a las 2 horas; los de ejemplo no se pueden cambiar.', 404);\nif (!['Nuevo', 'Recordatorio enviado'].includes(r.estado)) return fallo(`Ese lead ya está ${String(r.estado).toLowerCase()}.`, 409);\n\nconst estado = b.decision === 'contactado' ? 'Contactado' : 'Descartado';\nconst decidido_en = $now.setZone('Europe/Madrid').toFormat('yyyy-MM-dd HH:mm');\nreturn [{ json: { ok: true, id, sid, estado, decidido_en, fila: { ...r, estado, decidido_en } } }];\n"
+      },
+      "id": "f3b8445e-b130-4dd4-a0d8-d897f0f5fde6",
+      "name": "Comprobar decisión",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1232e83e-ac24-4b5e-b5aa-ba99914f3ff8",
+      "name": "¿Se puede decidir?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "leads_demo"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            },
+            {
+              "keyName": "sid",
+              "condition": "eq",
+              "keyValue": "={{ $json.sid }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "estado": "={{ $json.estado }}",
+            "decidido_en": "={{ $json.decidido_en }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "079bc192-7acb-4e36-afff-05268030b235",
+      "name": "Actualizar lead",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        520
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const PUBLICAS = ['id', 'fecha', 'contacto', 'empresa', 'provincia', 'zona', 'comercial', 'sector', 'producto', 'volumen',\n  'plazo', 'puntos', 'temperatura', 'estado', 'llamar_antes', 'nota', 'decidido_en'];\n\n// Devuelve el lead ya decidido y la nota que el CRM deja a dirección comercial.\nconst r = $('Comprobar decisión').first().json.fila;\nconst lead = { tuya: true };\nfor (const k of PUBLICAS) lead[k] = r[k];\n\nconst esc = (s) => String(s ?? '').replace(/[&<>\"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c]));\nconst html = `<div style=\"font-family:Arial,sans-serif;font-size:14px;color:#1d2430\">\n<p>${esc(r.comercial)} ha marcado el lead de <b>${esc(r.empresa)}</b> como <b>${esc(r.estado.toLowerCase())}</b> el ${esc(r.decidido_en.slice(8, 10))}/${esc(r.decidido_en.slice(5, 7))} a las ${esc(r.decidido_en.slice(11))}.</p>\n<p>${r.estado === 'Contactado' ? 'El recordatorio queda cancelado. La oportunidad pasa a la lista de ofertas en preparación.' : 'El recordatorio queda cancelado y el contacto pasa a la lista del boletín.'}</p>\n<p style=\"color:#5b6676\">Mensaje automático de la demo de marketing. Todos los datos son inventados.</p></div>`;\n\nreturn [{ json: { ok: true, lead, correo: { de: 'CRM', para: 'Dirección comercial', asunto: `Lead ${r.estado.toLowerCase()} · ${r.empresa} · ${r.comercial}`, html } } }];\n"
+      },
+      "id": "8c1c31bb-d8ba-4093-9860-731cae74c0a7",
+      "name": "Preparar respuesta (decidir)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          },
+          "responseCode": 200
+        }
+      },
+      "id": "ab20f207-07e6-41b7-97da-619893387274",
+      "name": "Responder decidida",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1540,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, error: $json.error } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          },
+          "responseCode": "={{ $json.status }}"
+        }
+      },
+      "id": "90da6a39-6359-4e32-aa51-c006d9663f24",
+      "name": "Responder error (decidir)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1100,
+        680
+      ]
+    }
+  ],
+  "connections": {
+    "Listar leads": {
+      "main": [
+        [
+          {
+            "node": "Asegurar tabla (listar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar tabla (listar)": {
+      "main": [
+        [
+          {
+            "node": "Leer leads (listar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer leads (listar)": {
+      "main": [
+        [
+          {
+            "node": "Filtrar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar": {
+      "main": [
+        [
+          {
+            "node": "Responder lista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear lead": {
+      "main": [
+        [
+          {
+            "node": "Asegurar tabla (crear)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar tabla (crear)": {
+      "main": [
+        [
+          {
+            "node": "Leer leads (crear)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer leads (crear)": {
+      "main": [
+        [
+          {
+            "node": "Puntuar y asignar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Puntuar y asignar": {
+      "main": [
+        [
+          {
+            "node": "¿Válida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Válida?": {
+      "main": [
+        [
+          {
+            "node": "Extraer fila",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder error (crear)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer fila": {
+      "main": [
+        [
+          {
+            "node": "Guardar lead demo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar lead demo": {
+      "main": [
+        [
+          {
+            "node": "Preparar respuesta (crear)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar respuesta (crear)": {
+      "main": [
+        [
+          {
+            "node": "Responder creada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decidir lead": {
+      "main": [
+        [
+          {
+            "node": "Asegurar tabla (decidir)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asegurar tabla (decidir)": {
+      "main": [
+        [
+          {
+            "node": "Leer leads (decidir)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer leads (decidir)": {
+      "main": [
+        [
+          {
+            "node": "Comprobar decisión",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comprobar decisión": {
+      "main": [
+        [
+          {
+            "node": "¿Se puede decidir?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Se puede decidir?": {
+      "main": [
+        [
+          {
+            "node": "Actualizar lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder error (decidir)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar lead": {
+      "main": [
+        [
+          {
+            "node": "Preparar respuesta (decidir)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar respuesta (decidir)": {
+      "main": [
+        [
+          {
+            "node": "Responder decidida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid"
+  },
+  "pinData": {}
+}
