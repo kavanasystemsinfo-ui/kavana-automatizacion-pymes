@@ -265,8 +265,8 @@
     <details class="guia" data-guia="turnos" open>
       <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>Guía: para qué sirve y cómo probarlo</summary>
       <div class="guia-cuerpo">
-        <div><h4>Para qué sirve</h4><p>El operario cuenta en un minuto, desde el móvil, cómo ha ido su turno: metros hechos, objetivo y minutos de parada por motivo.</p><h4>Qué resuelve</h4><p>Se acaban los partes en papel y pasar datos a limpio al día siguiente. El jefe de turno sabe al momento si una línea va por debajo del 80 % y por qué, y cada mañana recibe el resumen del día anterior.</p></div>
-        <div><h4>Cómo probarlo</h4><ol><li>Elige el turno y la línea, y escribe un nombre (vale uno inventado).</li><li>Pon los metros hechos: debajo verás la eficiencia calculada al momento.</li><li>Suma los minutos de parada con los botones + y −. Prueba a bajar los metros para que la eficiencia caiga del 80 %.</li><li>Pulsa <b>Enviar parte</b>.</li></ol></div>
+        <div><h4>Para qué sirve</h4><p>El operario cuenta en un minuto, desde el móvil, cómo ha ido su turno: cantidad fabricada, objetivo y minutos de parada por motivo.</p><h4>Qué resuelve</h4><p>Se acaban los partes en papel y pasar datos a limpio al día siguiente. El jefe de turno sabe al momento si una línea va por debajo del 80 % y por qué, y cada mañana recibe el resumen del día anterior.</p></div>
+        <div><h4>Cómo probarlo</h4><ol><li>Elige el turno y la línea, y escribe un nombre (vale uno inventado).</li><li>Pon la cantidad fabricada: debajo verás la eficiencia calculada al momento.</li><li>Suma los minutos de parada con los botones + y −. Prueba a bajar la cantidad para que la eficiencia caiga del 80 %.</li><li>Pulsa <b>Enviar parte</b>.</li></ol></div>
         <div><h4>Fíjate en</h4><ul><li>El correo que recibe el jefe de turno: si la eficiencia baja del 80 %, llega con aviso ⚠ y el motivo principal de parada.</li><li>Tu parte, al final de la hoja y en azul, debajo de la última semana de la planta.</li><li><b>Descargar</b> te da el Excel con toda la semana y tus partes.</li></ul></div>
       </div>
     </details>
@@ -297,7 +297,7 @@
           </div>
           <div class="bloque">
             <div class="dos">
-              <div><label for="t-metros">Metros hechos</label><input type="number" id="t-metros" name="metros" inputmode="numeric" min="0" step="1" value="3700" required></div>
+              <div><label for="t-metros">Cantidad fabricada</label><input type="number" id="t-metros" name="metros" inputmode="numeric" min="0" step="1" value="3700" required></div>
               <div><label for="t-objetivo">Objetivo</label><input type="number" id="t-objetivo" name="objetivo" inputmode="numeric" min="1" step="1" value="5000" required></div>
             </div>
             <div class="vivo" id="vivo-turnos" aria-live="polite"></div>
@@ -538,6 +538,7 @@
     <summary>Cómo está hecho y qué pasa con tus datos</summary>
     <ul>
       <li>Funciona con n8n, una herramienta de automatización instalada en un servidor propio. Esta demo usa los mismos cálculos y las mismas plantillas de correo que la versión que enviaría correos de verdad.</li>
+      <li>Vale para cualquier sector: para otra empresa se cambian las líneas, la unidad de producción (piezas, kilos, cajas…), el catálogo y los proveedores. La empresa de ejemplo es de perfilado metálico porque es el sector que mejor conozco.</li>
       <li>En una empresa, el formulario se abre desde el móvil con un enlace o un código QR, los correos llegan a las personas reales y la hoja puede ser un Excel o una hoja de Google compartida.</li>
       <li>Aquí no hay cuentas: tu navegador guarda un identificador aleatorio. Todos ven los mismos datos de ejemplo, que no se pueden cambiar; lo que envías tú solo lo ves tú y se borra a las 2 horas. Los nombres y las cifras son inventados.</li>
       <li>En facturas, cada una pasa cinco comprobaciones: que el proveedor esté dado de alta, que base más IVA sea el total, que no esté duplicada, que coincida con su pedido de compra y que la cuenta bancaria sea la de la ficha (el cambio de cuenta es el fraude más habitual). Si todo cuadra, se apunta y se programa el pago para la remesa del día 10 o 25; si no, queda retenida. En el flujo real las facturas se leen del buzón de correo.</li>
@@ -761,7 +762,7 @@ const COL_T = [
   { t: 'Turno', html: (f) => celda(f.turno) },
   { t: 'Línea', html: (f) => celda(f.linea) },
   { t: 'Operario', html: (f) => celda(f.operario) },
-  { t: 'Metros', html: (f) => celda(NF.format(f.metros), 'num') },
+  { t: 'Cantidad', html: (f) => celda(NF.format(f.metros), 'num') },
   { t: 'Objetivo', html: (f) => celda(NF.format(f.objetivo), 'num') },
   { t: 'Eficiencia', html: (f) => celda(pct(f.eficiencia), 'num ' + (f.aviso ? 'mal' : 'bien')) },
   { t: 'Paradas (min)', html: (f) => celda(f.paradas_total, 'num') },

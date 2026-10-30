@@ -1,6 +1,6 @@
 # Automatización para pymes industriales (n8n)
 
-Cuatro trámites de oficina y planta de una pyme del metal, automatizados con n8n en un servidor pequeño y sin licencias. Cada uno sigue el mismo patrón: un formulario sencillo, unas reglas claras que comprueban los datos, un correo a la persona que decide y una fila apuntada en la hoja de la oficina.
+Cuatro trámites de oficina y planta de una pyme industrial, automatizados con n8n en un servidor pequeño y sin licencias. Cada uno sigue el mismo patrón: un formulario sencillo, unas reglas claras que comprueban los datos, un correo a la persona que decide y una fila apuntada en la hoja de la oficina.
 
 **Demo en vivo, sin registrarse:** https://informe.kavanasystems.com/demo/
 
@@ -8,12 +8,14 @@ Cuatro trámites de oficina y planta de una pyme del metal, automatizados con n8
 
 | Trámite | Qué hace | Qué ahorra |
 | --- | --- | --- |
-| **Parte de fin de turno** (planta) | El operario cuenta el turno desde el móvil; n8n calcula la eficiencia y las paradas por motivo, avisa si baja del 80 % y cada mañana manda el resumen del día anterior. | Partes en papel que alguien pasa a limpio y caídas de eficiencia que se descubren tarde. |
+| **Parte de fin de turno** (planta) | El operario apunta la cantidad fabricada y las paradas desde el móvil; n8n calcula la eficiencia y las paradas por motivo, avisa si baja del 80 % y cada mañana manda el resumen del día anterior. | Partes en papel que alguien pasa a limpio y caídas de eficiencia que se descubren tarde. |
 | **Vacaciones y permisos** (RRHH) | Cuenta los días laborables, comprueba el saldo y los solapes, avisa si coincide con alguien del departamento y la responsable aprueba o rechaza con un clic. | Correos sueltos, el calendario de la pared y saldos llevados a mano. |
 | **Facturas de proveedores** (contabilidad) | Cinco comprobaciones: proveedor dado de alta, base + IVA = total, no duplicada, coincide con el pedido y cuenta bancaria de la ficha. Si cuadra, se contabiliza y se programa el pago; si no, queda retenida. | Revisar factura a factura y el fraude del cambio de cuenta bancaria. |
 | **Contactos de clientes** (comercial) | Puntúa cada consulta de 0 a 100 con reglas fijas, la manda al comercial de su zona con un plazo para llamar y recuerda las que nadie atiende. | Presupuestos que se quedan sin respuesta. |
 
-Sin IA: reglas fijas, fáciles de explicar y de cambiar. Datos inventados de una empresa de perfilado metálico.
+Sin IA: reglas fijas, fáciles de explicar y de cambiar.
+
+**Vale para cualquier sector.** Ningún trámite depende del producto: para otra empresa se cambian las líneas, la unidad de producción (piezas, kilos, cajas…), el catálogo y los proveedores. La demo usa una empresa de perfilado metálico inventada porque es el sector que mejor conozco.
 
 ## Cómo funciona
 
@@ -69,16 +71,16 @@ El formulario es abierto: cualquiera con el enlace puede enviar un informe. Si h
 
 Los dos flujos usan una credencial SMTP de n8n llamada `SMTP Gmail Kavana`, que se crea a mano en el editor y no está en el repo. Con Gmail: `smtp.gmail.com`, puerto 587, SSL/TLS desactivado (va por STARTTLS) y una contraseña de aplicación. Muchos proveedores de VPS, como Hetzner, bloquean la salida por los puertos 465 y 25.
 
-- **Informe de turno**: después de guardar, envía un correo con la eficiencia, los metros frente al objetivo y las paradas por motivo. Si la eficiencia baja del 80 %, el asunto empieza por "⚠ AVISO" y el correo destaca el motivo principal. Si el correo falla, el informe queda guardado y el operario ve su confirmación igual.
-- **Resumen diario de turnos**: cada día a las 07:00 (hora de Madrid) resume los informes del día anterior: por línea (turnos, metros, eficiencia, paradas y avisos), la eficiencia global y las 3 paradas más largas. Si no hubo informes, también avisa. Se puede lanzar a mano desde el editor con el nodo "Lanzar a mano".
+- **Informe de turno**: después de guardar, envía un correo con la eficiencia, la cantidad fabricada frente al objetivo y las paradas por motivo. Si la eficiencia baja del 80 %, el asunto empieza por "⚠ AVISO" y el correo destaca el motivo principal. Si el correo falla, el informe queda guardado y el operario ve su confirmación igual.
+- **Resumen diario de turnos**: cada día a las 07:00 (hora de Madrid) resume los informes del día anterior: por línea (turnos, cantidad fabricada, eficiencia, paradas y avisos), la eficiencia global y las 3 paradas más largas. Si no hubo informes, también avisa. Se puede lanzar a mano desde el editor con el nodo "Lanzar a mano".
 
 ## Flujo "Informe de turno"
 
 Formulario → Asegurar tabla → Calcular → Guardar informe → Confirmación
 
-- **Formulario** (`/form/informe-turno`): fecha, turno, línea, operario, metros, objetivo, minutos de parada por motivo y observaciones.
+- **Formulario** (`/form/informe-turno`): fecha, turno, línea, operario, cantidad fabricada, objetivo, minutos de parada por motivo y observaciones.
 - **Asegurar tabla**: crea la tabla `informes_turno` si no existe, así el flujo funciona en una instalación nueva sin pasos a mano.
-- **Calcular**: valida los datos (números no negativos, objetivo mayor que 0, paradas de 480 min como máximo) y calcula la eficiencia (metros / objetivo), las paradas totales, el motivo principal y si hay aviso (eficiencia menor del 80 %).
+- **Calcular**: valida los datos (números no negativos, objetivo mayor que 0, paradas de 480 min como máximo) y calcula la eficiencia (cantidad fabricada / objetivo), las paradas totales, el motivo principal y si hay aviso (eficiencia menor del 80 %).
 - **Confirmación**: el operario ve su eficiencia y sus minutos de parada.
 
 ## Flujo "RRHH · Solicitud de ausencias"
