@@ -76,6 +76,11 @@
   .dos { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
   .dos > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   input[type="date"] { min-width: 0; padding-left: 8px; padding-right: 6px; font-size: 15px; }
+  .fecha-es { position: relative; min-width: 0; }
+  .fecha-es input[type="text"] { padding-right: 44px; }
+  .fecha-es .cal { position: absolute; top: 0; right: 0; width: 44px; height: 100%; display: grid; place-items: center; color: var(--soft); }
+  .fecha-es .cal svg { width: 20px; height: 20px; }
+  .fecha-es .cal input { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
   .dos label { font-size: 15px; font-weight: 600; }
   input[type="text"], input[type="number"], input[type="date"], select, textarea {
     width: 100%; min-height: 44px; padding: 9px 11px; border-radius: 6px; border: 1px solid var(--line-strong); background: #fff; font-size: 16px;
@@ -647,7 +652,12 @@ document.querySelectorAll('.hoja').forEach((h) => h.addEventListener('click', (e
   const td = e.target.closest('td');
   if (td) seleccionar(h.closest('.escena'), td);
 }));
-const celda = (v, clase = '') => `<td class="${clase}">${ESC(v)}</td>`;
+// Fechas a la española (DD/MM/AA). La API trabaja en AAAA-MM-DD; solo cambia lo que se ve.
+const aES = (s) => String(s ?? '').replace(/^\d{2}(\d{2})-(\d{2})-(\d{2})(?=( \d{2}:\d{2})?$)/, '$3/$2/$1');
+const textoES = (s) => String(s ?? '')
+  .replace(/\b\d{2}(\d{2})-(\d{2})-(\d{2})\b/g, '$3/$2/$1')
+  .replace(/\b(\d{2})\/(\d{2})\/\d{2}(\d{2})\b/g, '$1/$2/$3');
+const celda = (v, clase = '') => `<td class="${clase}">${ESC(aES(v))}</td>`;
 
 document.querySelectorAll('.descargar').forEach((b) => b.addEventListener('click', async () => {
   const sec = b.closest('.escena');
@@ -678,7 +688,7 @@ const escenaDe = (sec) => sec.id.replace('escena-', '');
 
 function recibirCorreo(sec, correo, extra = '') {
   const e = escenaDe(sec);
-  correos[e].unshift({ ...correo, extra, hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }), leido: false });
+  correos[e].unshift({ ...correo, asunto: textoES(correo.asunto), html: textoES(correo.html), extra, hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }), leido: false });
   correos[e] = correos[e].slice(0, 8);
   abrirCorreo(sec, 0);
   if (innerWidth < 900) sec.querySelector('.buzon').closest('.ventana').scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: 'start' });
@@ -1106,6 +1116,38 @@ sL.addEventListener('click', async (e) => {
   } finally {
     sL.querySelectorAll('[data-decidir]').forEach((x) => { x.disabled = false; });
   }
+});
+
+// ---------- Campos de fecha en DD/MM/AA ----------
+// El campo de fecha del navegador sigue su idioma (en inglés sale MM/DD/AAAA). Se enseña un texto DD/MM/AA y el
+// campo original queda escondido bajo el botón del calendario, con el valor AAAA-MM-DD que leen el formulario y la API.
+function deES(s) {
+  const m = String(s).trim().match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2}|\d{4})$/) || String(s).trim().match(/^(\d{2})(\d{2})(\d{2}|\d{4})$/);
+  if (!m) return '';
+  const [d, me, a] = [Number(m[1]), Number(m[2]), m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3])];
+  const f = new Date(Date.UTC(a, me - 1, d));
+  return f.getUTCDate() === d && f.getUTCMonth() === me - 1 ? isoDia(f) : '';
+}
+document.querySelectorAll('input[type="date"]').forEach((nat) => {
+  const caja = document.createElement('div');
+  caja.className = 'fecha-es';
+  const txt = document.createElement('input');
+  Object.assign(txt, { type: 'text', id: nat.id, inputMode: 'numeric', placeholder: 'DD/MM/AA', autocomplete: 'off', value: aES(nat.value) });
+  txt.setAttribute('aria-describedby', nat.id + '-formato');
+  nat.removeAttribute('id');
+  nat.tabIndex = -1;
+  nat.setAttribute('aria-hidden', 'true');
+  const cal = document.createElement('span');
+  cal.className = 'cal';
+  cal.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span hidden id="${txt.id}-formato">Formato día/mes/año, por ejemplo 30/10/26</span>`;
+  nat.replaceWith(caja);
+  cal.appendChild(nat);
+  caja.append(txt, cal);
+  txt.addEventListener('input', () => { nat.value = deES(txt.value); });
+  txt.addEventListener('blur', () => { if (nat.value) txt.value = aES(nat.value); });
+  nat.addEventListener('click', () => { try { nat.showPicker(); } catch { /* el navegador abre el suyo */ } });
+  nat.addEventListener('input', () => { txt.value = aES(nat.value); });
+  nat.addEventListener('change', () => { txt.value = aES(nat.value); });
 });
 
 abrirCorreo(sT, 0);
