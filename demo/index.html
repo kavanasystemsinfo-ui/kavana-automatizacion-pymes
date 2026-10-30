@@ -764,7 +764,7 @@ const COL_T = [
   { t: 'Eficiencia', html: (f) => celda(pct(f.eficiencia), 'num ' + (f.aviso ? 'mal' : 'bien')) },
   { t: 'Paradas (min)', html: (f) => celda(f.paradas_total, 'num') },
   { t: 'Motivo principal', html: (f) => celda(f.motivo_principal) },
-  { t: 'Observaciones', html: (f) => `<td class="corta" data-v="${ESC(f.observaciones)}">${ESC(f.observaciones)}</td>` },
+  { t: 'Observaciones', html: (f) => `<td class="corta" data-v="${ESC(textoES(f.observaciones))}">${ESC(textoES(f.observaciones))}</td>` },
 ];
 async function cargarTurnos(nuevo) {
   const filas = (await pedir(`/informes?sid=${SID}`)).filas || [];
@@ -854,7 +854,7 @@ const COL_A = [
   { t: 'Hasta', html: (f) => celda(f.hasta) },
   { t: 'Días', html: (f) => celda(f.dias, 'num') },
   { t: 'Estado', html: (f) => f.estado === 'Pendiente' && f.tuya ? `<td data-v="Pendiente">Pendiente ${botonesHoja(f.id)}</td>` : celda(f.estado, { Aprobada: 'bien', Rechazada: 'mal' }[f.estado] || '') },
-  { t: 'Coincide con', html: (f) => `<td class="corta" data-v="${ESC(f.conflictos)}">${ESC(f.conflictos)}</td>` },
+  { t: 'Coincide con', html: (f) => `<td class="corta" data-v="${ESC(textoES(f.conflictos))}">${ESC(textoES(f.conflictos))}</td>` },
   { t: 'Solicitada', html: (f) => celda(f.fecha_solicitud) },
 ];
 async function cargarAusencias(nuevo) {
@@ -990,7 +990,7 @@ const COL_F = [
   { t: 'Total', html: (f) => `<td class="num" data-v="${f.total}">${ESC(EUR(f.total))}</td>` },
   { t: 'Estado', html: (f) => f.estado === 'Pendiente de revisar' && f.tuya ? `<td data-v="Pendiente de revisar">Pendiente ${botonesHojaF(f.id)}</td>` : celda(f.estado, { Contabilizada: 'bien', Rechazada: 'mal' }[f.estado] || '') },
   { t: 'Pago previsto', html: (f) => celda(f.fecha_pago) },
-  { t: 'Incidencias', html: (f) => `<td class="corta mal" data-v="${ESC(f.incidencias)}">${ESC(f.incidencias)}</td>` },
+  { t: 'Incidencias', html: (f) => `<td class="corta mal" data-v="${ESC(textoES(f.incidencias))}">${ESC(textoES(f.incidencias))}</td>` },
 ];
 async function cargarFacturas(nuevo) {
   filasF = (await pedir(`/facturas?sid=${SID}`)).filas || [];
@@ -1079,7 +1079,7 @@ const COL_L = [
   { t: 'Comercial', html: (f) => celda(f.estado === 'Nuevo' || f.estado === 'Recordatorio enviado' || f.estado === 'Contactado' ? f.comercial : '') },
   { t: 'Estado', html: (f) => ABIERTO(f) && f.tuya ? `<td data-v="${ESC(f.estado)}">${ESC(f.estado)} ${botonesHojaL(f.id)}</td>` : celda(f.estado, { Contactado: 'bien', 'Recordatorio enviado': 'mal' }[f.estado] || '') },
   { t: 'Llamar antes de', html: (f) => celda(f.llamar_antes) },
-  { t: 'Nota', html: (f) => `<td class="corta" data-v="${ESC(f.nota)}">${ESC(f.nota)}</td>` },
+  { t: 'Nota', html: (f) => `<td class="corta" data-v="${ESC(textoES(f.nota))}">${ESC(textoES(f.nota))}</td>` },
 ];
 async function cargarLeads(nuevo) {
   filasL = (await pedir(`/leads?sid=${SID}`)).filas || [];
