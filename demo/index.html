@@ -410,8 +410,8 @@
     <details class="guia" data-guia="facturas" open>
       <summary><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>Guía: para qué sirve y cómo probarlo</summary>
       <div class="guia-cuerpo">
-        <div><h4>Para qué sirve</h4><p>Revisa sola cada factura de proveedor antes de pagarla.</p><h4>Qué resuelve</h4><p>Evita pagar dos veces la misma factura, pagar más de lo pedido o caer en el fraude del cambio de cuenta bancaria. Contabilidad solo tiene que mirar las facturas que tienen algún problema; las demás se apuntan y se programa el pago solas.</p></div>
-        <div><h4>Cómo probarlo</h4><ol><li>Eres el proveedor: elige proveedor y pedido. Los importes y la cuenta bancaria se rellenan solos.</li><li>Envía la factura tal cual: pasa sola y se programa el pago.</li><li>Prueba a cambiar la base, el total o una cifra de la cuenta, o a enviar el mismo número dos veces: verás por qué la retiene.</li><li>Ahora eres de contabilidad: pulsa <b>Aprobar pago</b> o <b>Rechazar</b>.</li></ol></div>
+        <div><h4>Para qué sirve</h4><p>Revisa sola cada factura de proveedor antes de pagarla.</p><h4>Qué resuelve</h4><p>Ayuda a detectar facturas duplicadas, importes superiores al pedido o cambios sospechosos de cuenta bancaria. Contabilidad solo tiene que mirar las facturas que tienen algún problema; las demás quedan preparadas para su revisión y registro, sin pagarse solas.</p></div>
+        <div><h4>Cómo probarlo</h4><ol><li>Eres el proveedor: elige proveedor y pedido. Los importes y la cuenta bancaria se rellenan solos.</li><li>Envía la factura tal cual: pasa las comprobaciones y queda preparada para su registro y revisión.</li><li>Prueba a cambiar la base, el total o una cifra de la cuenta, o a enviar el mismo número dos veces: verás por qué la retiene.</li><li>Ahora eres de contabilidad: pulsa <b>Aprobar pago</b> o <b>Rechazar</b>.</li></ol></div>
         <div><h4>Fíjate en</h4><ul><li>Las cinco comprobaciones del correo, cada una con ✓ o ✗ y su motivo.</li><li>Que al aprobar se paga a la cuenta de la ficha del proveedor, nunca a la que venga en la factura.</li><li>La fecha de pago: los pagos se agrupan en las remesas de los días 10 y 25.</li></ul></div>
       </div>
     </details>
@@ -541,7 +541,7 @@
       <li>Vale para cualquier sector: para otra empresa se cambian las líneas, la unidad de producción (piezas, kilos, cajas…), el catálogo y los proveedores. La empresa de ejemplo es de perfilado metálico porque es el sector que mejor conozco.</li>
       <li>En una empresa, el formulario se abre desde el móvil con un enlace o un código QR, los correos llegan a las personas reales y la hoja puede ser un Excel o una hoja de Google compartida.</li>
       <li>Aquí no hay cuentas: tu navegador guarda un identificador aleatorio. Todos ven los mismos datos de ejemplo, que no se pueden cambiar; lo que envías tú solo lo ves tú y se borra a las 2 horas. Los nombres y las cifras son inventados.</li>
-      <li>En facturas, cada una pasa cinco comprobaciones: que el proveedor esté dado de alta, que base más IVA sea el total, que no esté duplicada, que coincida con su pedido de compra y que la cuenta bancaria sea la de la ficha (el cambio de cuenta es el fraude más habitual). Si todo cuadra, se apunta y se programa el pago para la remesa del día 10 o 25; si no, queda retenida. En el flujo real las facturas se leen del buzón de correo.</li>
+      <li>En facturas, cada una pasa cinco comprobaciones: que el proveedor esté dado de alta, que base más IVA sea el total, que no esté duplicada, que coincida con su pedido de compra y que la cuenta bancaria sea la de la ficha (el cambio de cuenta bancaria es un riesgo conocido en el fraude de facturas; conviene contrastarlo con los datos del proveedor por un canal independiente). Si todo cuadra, se apunta y queda propuesta para la remesa del día 10 o 25, a la espera de la autorización de la empresa; si no, queda retenida. En el flujo real las facturas se leen del buzón de correo.</li>
       <li>En contactos, cada consulta se puntúa de 0 a 100 con reglas fijas, sin IA: producto (si lo fabricamos), volumen, plazo y sector. Con 70 o más es caliente y el comercial de la zona tiene 24 horas para llamar; entre 40 y 69, 3 días; por debajo, el contacto recibe el catálogo y entra en el boletín. Si nadie lo marca como contactado a tiempo, llega un recordatorio. Si la empresa ya tenía un contacto abierto, el nuevo va al mismo comercial.</li>
       <li>En vacaciones se cuentan solo los días laborables (sin fines de semana ni festivos nacionales), con un saldo de 22 días al año, y se avisa si coincides con alguien de tu departamento. Las solicitudes que ya están en la hoja son de compañeros inventados.</li>
     </ul>
@@ -968,7 +968,7 @@ function vivoFacturas() {
   if (p.ficha && limpiaIban(fF.iban.value) !== p.iban) avisos.push('la cuenta no es la de la ficha del proveedor');
   v.className = 'vivo ' + (avisos.length ? 'aviso' : '');
   v.innerHTML = `<div class="cifra">${EUR(total)}</div>
-    <p>${avisos.length ? `<b>Contabilidad la retendrá:</b> ${ESC(avisos.join('; '))}.` : 'Cuadra con el pedido y con la ficha del proveedor: se contabilizará sola.'}</p>`;
+    <p>${avisos.length ? `<b>Contabilidad la retendrá:</b> ${ESC(avisos.join('; '))}.` : 'Cuadra con el pedido y con la ficha del proveedor: queda preparada para su registro y revisión.'}</p>`;
 }
 fF.addEventListener('input', (e) => {
   if (['base', 'iva_pct'].includes(e.target.name)) calcularTotal();
