@@ -801,7 +801,36 @@ async function cargarTurnos(nuevo) {
   if (filas.some((f) => f.tuya) && !progreso.turnos) progreso.turnos = 3;
   pintarHoja(sT, COL_T, filas, nuevo);
   pintarDireccion(filas);
+  if (!resumenSembrado) { resumenSembrado = true; if (!correos.turnos.length) sembrarResumen(filas); }
   if (escena === 'turnos') pintarPasos();
+}
+
+// La bandeja del jefe de turno no empieza vacía: ya tiene el resumen de las 07:00 del último día de la hoja.
+let resumenSembrado = false;
+function sembrarResumen(filas) {
+  const todas = filas.filter((f) => !f.tuya && f.linea && Number(f.objetivo) > 0);
+  if (!todas.length) return;
+  const dias = [...new Set(todas.map((f) => f.fecha))].sort();
+  const dia = dias.filter((x) => todas.some((f) => f.fecha === x && f.aviso)).pop() || dias.pop();
+  const d = todas.filter((f) => f.fecha === dia);
+  const fd = `${dia.slice(8, 10)}/${dia.slice(5, 7)}/${dia.slice(2, 4)}`;
+  const suma = (arr, k) => arr.reduce((a, f) => a + (Number(f[k]) || 0), 0);
+  const efi = (arr) => (suma(arr, 'metros') / suma(arr, 'objetivo')) * 100;
+  const avisos = d.filter((f) => f.aviso).length;
+  const lineas = [...new Set(d.map((f) => f.linea))];
+  const motivos = Object.entries(MOTIVOS).map(([k, m]) => [m, suma(d, k)]).filter((m) => m[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const td = 'style="padding:6px 10px;border-bottom:1px solid #e1e4e8;text-align:right"';
+  const tl = 'style="padding:6px 10px;border-bottom:1px solid #e1e4e8;text-align:left"';
+  const filasHtml = lineas.map((l) => { const a = d.filter((f) => f.linea === l); const e = efi(a); return `<tr><td ${tl}>${ESC(l)}</td><td ${td}>${a.length}</td><td ${td}>${NF.format(suma(a, 'metros'))}</td><td ${td} ><b style="color:${e < 80 ? '#c42b1c' : '#107c41'}">${pct(e)}</b></td><td ${td}>${suma(a, 'paradas_total')} min</td><td ${td}>${a.filter((f) => f.aviso).length}</td></tr>`; }).join('');
+  correos.turnos.unshift({
+    de: 'Informe de turno', para: 'Jefe de turno', hora: '07:00', leido: true, extra: '',
+    asunto: `${avisos ? '⚠ ' : ''}Resumen de turnos ${fd}: ${pct(efi(d))}${avisos ? ` · ${avisos} con aviso` : ''}`,
+    html: `<p>Resumen de los turnos del ${fd}: ${d.length} partes, eficiencia global <b>${pct(efi(d))}</b>${avisos ? `, ${avisos} ${avisos === 1 ? 'turno' : 'turnos'} por debajo del 80 %` : ''}.</p>
+      <table style="border-collapse:collapse;font-size:14px;width:100%"><tr style="background:#f3f3f3"><th ${tl}>Línea</th><th ${td}>Turnos</th><th ${td}>Cantidad</th><th ${td}>Eficiencia</th><th ${td}>Paradas</th><th ${td}>Avisos</th></tr>${filasHtml}</table>
+      <p style="margin-top:14px"><b>Principales paradas:</b> ${motivos.map(([m, v]) => `${ESC(m)} (${v} min)`).join(', ') || 'ninguna'}.</p>
+      <p style="color:#5f6670;font-size:13px">Este correo llega solo cada mañana a las 07:00. Envía un parte tuyo y verás el aviso al momento.</p>`,
+  });
+  abrirCorreo(sT, 0);
 }
 
 // Resumen para la dirección: se calcula al vuelo con los partes que ya están en la hoja (los de ejemplo y los tuyos).
