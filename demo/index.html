@@ -138,6 +138,12 @@
   .dir-dia i { display: block; width: 100%; max-width: 34px; border-radius: 4px 4px 0 0; background: var(--accent); }
   .dir-dia i.mal { background: var(--bad); }
   .dir-nota { font-size: 12px; color: var(--faint); }
+  .dir-lista { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+  .dir-lista li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .dir-lista li:last-child { border-bottom: 0; }
+  .dir-lista small { color: var(--soft); display: block; }
+  .dir-lista .mal { color: var(--bad); font-weight: 600; white-space: nowrap; }
+  .dir-lista .fin { color: var(--soft); white-space: nowrap; }
   @media (max-width: 560px) { .dir-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dir-fila { grid-template-columns: 96px 1fr 48px; } }
   .ventana { background: var(--panel); border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: var(--shadow); overflow: hidden; min-width: 0; }
 
@@ -499,6 +505,10 @@
           <div class="xl-pie"><span class="tab">Facturas recibidas</span><span class="info">Tus facturas van al final, en azul; las retenidas se deciden desde aquí.</span></div>
         </div>
       </div>
+      <div>
+        <p class="zona-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Lo que ve contabilidad</p>
+        <div class="ventana dir" id="dir-facturas" aria-live="polite"></div>
+      </div>
     </div>
   </section>
 
@@ -556,6 +566,10 @@
           <div class="hoja"><table><thead></thead><tbody></tbody></table></div>
           <div class="xl-pie"><span class="tab">Leads</span><span class="info">Tus contactos van al final, en azul; los abiertos se marcan desde aquí.</span></div>
         </div>
+      </div>
+      <div>
+        <p class="zona-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Lo que ve el equipo comercial</p>
+        <div class="ventana dir" id="dir-leads" aria-live="polite"></div>
       </div>
     </div>
   </section>
@@ -741,7 +755,7 @@ function abrirCorreo(sec, i) {
       <span class="as ${/^⚠/.test(x.asunto) ? 'aviso' : ''}">${ESC(x.asunto)}</span></button></li>`).join('')}</ul>
     <article class="lectura">
       <h3>${ESC(c.asunto)}</h3>
-      <div class="remite"><span class="avatar" aria-hidden="true">${ESC(iniciales(c.de))}</span><span><b>${ESC(c.de)}</b><br>Para: ${ESC(c.para)}</span><time>Hoy, ${c.hora}</time></div>
+      <div class="remite"><span class="avatar" aria-hidden="true">${ESC(iniciales(c.de))}</span><span><b>${ESC(c.de)}</b><br>Para: ${ESC(c.para)}</span><time>${c.cuando ? ESC(c.cuando) : 'Hoy, ' + c.hora}</time></div>
       <div class="cuerpo"><iframe sandbox="allow-same-origin" title="Contenido del correo"></iframe></div>
       ${c.extra}
     </article>`;
@@ -953,6 +967,7 @@ async function cargarAusencias(nuevo) {
   if (filasA.some((f) => f.tuya) && !progreso.ausencias) progreso.ausencias = 3;
   pintarHoja(sA, COL_A, filasA, nuevo);
   vivoAusencias();
+  sembrarUna('ausencias', sA, () => correosAusencias(filasA));
   if (escena === 'ausencias') pintarPasos();
 }
 vivoAusencias();
@@ -1087,6 +1102,8 @@ async function cargarFacturas(nuevo) {
   filasF.forEach((f) => { f.__clave = f.id; });
   if (filasF.some((f) => f.tuya) && !progreso.facturas) progreso.facturas = 3;
   pintarHoja(sF, COL_F, filasF, nuevo);
+  pintarPanelFacturas(filasF);
+  sembrarUna('facturas', sF, () => correosFacturas(filasF));
   const pedido = fF.pedido.value;
   rellenarPedidos();
   if (nuevo !== undefined) fF.pedido.value = pedido;
@@ -1176,7 +1193,152 @@ async function cargarLeads(nuevo) {
   filasL.forEach((f) => { f.__clave = f.id; });
   if (filasL.some((f) => f.tuya) && !progreso.leads) progreso.leads = 3;
   pintarHoja(sL, COL_L, filasL, nuevo);
+  pintarPanelLeads(filasL);
+  sembrarUna('leads', sL, () => correosLeads(filasL));
   if (escena === 'leads') pintarPasos();
+}
+
+// ---------- Bandejas con correos de ejemplo y tarjetas de resumen (facturas, leads, vacaciones) ----------
+const sembrado = {};
+function sembrarUna(clave, sec, crear) {
+  if (sembrado[clave]) return;
+  sembrado[clave] = true;
+  if (correos[clave].length) return;
+  const lista = crear();
+  if (!lista.length) return;
+  correos[clave] = lista.map((c) => ({ extra: '', leido: true, ...c }));
+  abrirCorreo(sec, 0);
+}
+const hm = (s) => { const m = String(s).match(/^\d{4}-(\d{2})-(\d{2})(?: (\d{2}:\d{2}))?/); return m ? `${m[2]}/${m[1]}${m[3] ? ' ' + m[3] : ''}` : ''; };
+const boton = (t, bueno) => `<span style="display:inline-block;margin-right:8px;padding:7px 14px;border-radius:6px;font-weight:600;font-size:14px;${bueno ? 'background:#107c41;color:#fff' : 'background:#fff;color:#1f2328;border:1px solid #c9ced4'}">${t}</span>`;
+const nota = (t) => `<p style="color:#5f6670;font-size:13px">${t}</p>`;
+const EURC = (n) => new Intl.NumberFormat('es-ES', { useGrouping: 'always', maximumFractionDigits: 0 }).format(Math.round(n)) + ' €';
+
+function correosAusencias(filas) {
+  const pend = filas.filter((f) => !f.tuya && f.estado === 'Pendiente').sort((a, b) => b.dias - a.dias || b.id - a.id);
+  const apro = filas.filter((f) => !f.tuya && f.estado === 'Aprobada').sort((a, b) => b.fecha_solicitud.localeCompare(a.fecha_solicitud));
+  const salida = [];
+  const p = pend[0];
+  if (p) {
+    const choca = p.conflictos ? `<b style="color:#c42b1c">Coincide con ${ESC(textoES(p.conflictos))}.</b>` : 'No coincide con nadie de su departamento.';
+    salida.push({
+      de: 'Vacaciones y permisos', para: 'Responsable de personal', hora: hm(p.fecha_solicitud), cuando: aES(p.fecha_solicitud),
+      asunto: `Solicitud de ${p.tipo.toLowerCase()}: ${p.empleado}, ${p.dias} ${p.dias === 1 ? 'día' : 'días'}`,
+      html: `<p><b>${ESC(p.empleado)}</b> (${ESC(p.departamento)}) pide <b>${ESC(p.tipo.toLowerCase())}</b> del ${aES(p.desde)} al ${aES(p.hasta)}: ${p.dias} ${p.dias === 1 ? 'día laborable' : 'días laborables'}.</p>
+        <p>Le quedaban ${p.saldo_previo} días; si lo apruebas, le quedarán ${p.saldo_previo - p.dias}. ${choca}</p>
+        <p style="margin:16px 0">${boton('Aprobar', true)}${boton('Rechazar', false)}</p>
+        ${nota('En el correo real estos dos botones deciden con un clic. Pruébalo con tu propia solicitud, a la izquierda.')}`,
+    });
+  }
+  const a = apro[0];
+  if (a) salida.push({
+    de: 'Vacaciones y permisos', para: a.empleado, hora: hm(a.decidido_en), cuando: aES(a.decidido_en),
+    asunto: `Tu solicitud de ${a.tipo.toLowerCase()} está aprobada`,
+    html: `<p>Hola, ${ESC(a.empleado.split(' ')[0])}:</p><p>Tu solicitud de <b>${ESC(a.tipo.toLowerCase())}</b> del ${aES(a.desde)} al ${aES(a.hasta)} (${a.dias} ${a.dias === 1 ? 'día' : 'días'}) ha sido <b style="color:#107c41">aprobada</b>. Te quedan ${a.saldo_previo - a.dias} días este año.</p>`,
+  });
+  return salida;
+}
+
+function correosFacturas(filas) {
+  const orden = { 'Pendiente de revisar': 0, Rechazada: 1 };
+  const lista = filas.filter((f) => !f.tuya && f.estado in orden && f.incidencias).sort((a, b) => orden[a.estado] - orden[b.estado] || b.id - a.id).slice(0, 2);
+  return lista.map((f) => {
+    const inc = f.incidencias;
+    const fila = (ok, t) => `<tr><td style="padding:4px 8px;width:26px;font-weight:700;color:${ok ? '#107c41' : '#c42b1c'}">${ok ? '✓' : '✗'}</td><td style="padding:4px 8px">${t}</td></tr>`;
+    const checks = [
+      [!/no tiene ficha/i.test(inc), 'Proveedor dado de alta'],
+      [Math.abs(Number(f.base) + Number(f.cuota_iva) - Number(f.total)) < 0.01, 'Base + IVA = total'],
+      [!/duplicad/i.test(inc), 'No está duplicada'],
+      [!!f.pedido && !/pedido/i.test(inc), 'Coincide con el pedido de compra'],
+      [!/cuenta/i.test(inc), 'Cuenta bancaria igual a la de la ficha'],
+    ];
+    const fallan = checks.filter((c) => !c[0]).length;
+    return {
+      de: 'Facturas de proveedores', para: 'Contabilidad', hora: hm(f.fecha), cuando: aES(f.fecha),
+      asunto: `⚠ Factura ${f.numero} de ${f.proveedor}: retenida, ${fallan} ${fallan === 1 ? 'comprobación falla' : 'comprobaciones fallan'}`,
+      html: `<p>Ha llegado la factura <b>${ESC(f.numero)}</b> de ${ESC(f.proveedor)} por <b>${EUR(f.total)}</b> (${ESC(f.pedido || 'sin pedido')}).</p>
+        <table style="border-collapse:collapse;font-size:14px">${checks.map((c) => fila(c[0], c[1])).join('')}</table>
+        <p style="margin-top:12px"><b>Motivo:</b> ${ESC(textoES(inc)).replace(/; /g, '.<br>')}.</p>
+        ${f.estado === 'Rechazada' ? nota(`Contabilidad la rechazó el ${aES(f.decidido_en)}: no se paga hasta confirmarlo con el proveedor.`) : nota('Queda retenida hasta que contabilidad la apruebe o la rechace. Nunca se paga sola.')}`,
+    };
+  });
+}
+
+function correosLeads(filas) {
+  const salida = [];
+  const nuevo = filas.filter((f) => !f.tuya && f.estado === 'Nuevo' && f.temperatura === 'Caliente').sort((a, b) => b.id - a.id)[0];
+  const tarde = filas.filter((f) => !f.tuya && f.estado === 'Recordatorio enviado').sort((a, b) => b.id - a.id)[0];
+  const datos = (f) => `<table style="border-collapse:collapse;font-size:14px"><tr><td style="padding:3px 12px 3px 0;color:#5f6670">Empresa</td><td><b>${ESC(f.empresa)}</b> (${ESC(f.provincia)})</td></tr><tr><td style="padding:3px 12px 3px 0;color:#5f6670">Contacto</td><td>${ESC(f.contacto)}</td></tr><tr><td style="padding:3px 12px 3px 0;color:#5f6670">Pide</td><td>${ESC(f.producto)}, ${ESC(f.volumen.toLowerCase())}</td></tr><tr><td style="padding:3px 12px 3px 0;color:#5f6670">Plazo</td><td>${ESC(f.plazo.toLowerCase())}</td></tr></table>`;
+  if (nuevo) salida.push({
+    de: 'Contactos de la web', para: nuevo.comercial, hora: hm(nuevo.fecha), cuando: aES(nuevo.fecha),
+    asunto: `⚠ Lead caliente: ${nuevo.empresa} (${nuevo.puntos} puntos)`,
+    html: `<p>Ha llegado una consulta que puntúa <b>${nuevo.puntos} sobre 100</b> por producto, volumen, plazo y sector. Es de tu zona (${ESC(nuevo.zona)}).</p>${datos(nuevo)}
+      <p style="margin-top:12px"><b>Llámale antes del ${aES(nuevo.llamar_antes)}.</b> Si nadie lo hace, recibirás un recordatorio y avisará dirección.</p>`,
+  });
+  if (tarde) salida.push({
+    de: 'Contactos de la web', para: tarde.comercial, hora: hm(tarde.llamar_antes), cuando: aES(tarde.llamar_antes),
+    asunto: `⚠ Recordatorio: ${tarde.empresa} sigue sin llamada`,
+    html: `<p>Han pasado más de 24 horas sin contactar con <b>${ESC(tarde.empresa)}</b> (${tarde.puntos} puntos, lead caliente). Se avisa también a dirección.</p>${datos(tarde)}`,
+  });
+  return salida;
+}
+
+function pintarPanelFacturas(filas) {
+  const el = document.getElementById('dir-facturas');
+  const d = filas.filter((f) => f.numero);
+  if (!d.length) { el.innerHTML = '<p class="dir-nota">Aún no hay facturas que resumir.</p>'; return; }
+  const suma = (a) => a.reduce((x, f) => x + Number(f.total || 0), 0);
+  const cont = d.filter((f) => f.estado === 'Contabilizada');
+  const ret = d.filter((f) => f.estado === 'Pendiente de revisar');
+  const rech = d.filter((f) => f.estado === 'Rechazada');
+  const remesas = new Map();
+  cont.filter((f) => f.fecha_pago).forEach((f) => remesas.set(f.fecha_pago, (remesas.get(f.fecha_pago) || 0) + Number(f.total)));
+  const rem = [...remesas].sort((a, b) => a[0].localeCompare(b[0]));
+  const maxR = Math.max(1, ...rem.map((r) => r[1]));
+  const tipos = [[/no tiene ficha/i, 'Proveedor sin dar de alta'], [/cuenta/i, 'Cuenta bancaria sin confirmar'], [/ning[uú]n pedido/i, 'Sin pedido de compra'], [/es de .* cobra/i, 'Importe superior al pedido'], [/duplicad/i, 'Factura duplicada']];
+  const incs = d.flatMap((f) => String(f.incidencias || '').split('; ').filter(Boolean));
+  const por = tipos.map(([re, t]) => [t, incs.filter((i) => re.test(i)).length]).filter((x) => x[1] > 0).sort((a, b) => b[1] - a[1]);
+  const maxI = Math.max(1, ...por.map((x) => x[1]));
+  el.innerHTML = `
+    <div class="dir-kpis">
+      <div class="dir-kpi"><b>${d.length}</b><span>Facturas recibidas</span></div>
+      <div class="dir-kpi bien"><b>${EURC(suma(cont))}</b><span>Preparadas para pagar</span></div>
+      <div class="dir-kpi ${ret.length ? 'mal' : ''}"><b>${ret.length}</b><span>Retenidas · ${EURC(suma(ret))}</span></div>
+      <div class="dir-kpi ${rech.length ? 'mal' : ''}"><b>${EURC(suma(rech))}</b><span>Rechazadas (${rech.length})</span></div>
+    </div>
+    <div class="dir-cols">
+      <div><h4>Pagos por remesa</h4>${rem.length ? rem.map(([f, v]) => `<div class="dir-fila"><span>${ESC(aES(f).slice(0, 5))}</span><div class="dir-pista"><i style="width:${(v / maxR) * 100}%;background:var(--accent)"></i></div><em>${EURC(v)}</em></div>`).join('') : '<p class="dir-nota">Sin pagos programados.</p>'}</div>
+      <div><h4>Lo que han detectado las comprobaciones</h4>${por.length ? por.map(([t, n]) => `<div class="dir-fila"><span title="${ESC(t)}">${ESC(t)}</span><div class="dir-pista"><i class="mal" style="width:${(n / maxI) * 100}%"></i></div><em>${n}</em></div>`).join('') : '<p class="dir-nota">Ninguna incidencia.</p>'}</div>
+    </div>
+    <p class="dir-nota">Se calcula con las facturas del libro: envía una tuya y las cifras se mueven. Los pagos se agrupan en las remesas de los días 10 y 25.</p>`;
+}
+
+function pintarPanelLeads(filas) {
+  const el = document.getElementById('dir-leads');
+  const d = filas.filter((f) => f.empresa);
+  if (!d.length) { el.innerHTML = '<p class="dir-nota">Aún no hay contactos que resumir.</p>'; return; }
+  const abiertos = d.filter((f) => ABIERTO(f));
+  const ts = (s) => new Date(String(s).replace(' ', 'T')).getTime();
+  const resp = d.filter((f) => f.estado === 'Contactado' && f.decidido_en).map((f) => (ts(f.decidido_en) - ts(f.fecha)) / 36e5).filter((h) => h >= 0);
+  const media = resp.length ? Math.round(resp.reduce((a, h) => a + h, 0) / resp.length) : null;
+  const cuenta = (clave, orden) => { const m = new Map(); d.forEach((f) => m.set(f[clave], (m.get(f[clave]) || 0) + 1)); return [...m].sort(orden || ((a, b) => b[1] - a[1])); };
+  const ORD = ['Caliente', 'Templado', 'Frío', 'Fuera de catálogo'];
+  const temp = cuenta('temperatura', (a, b) => ORD.indexOf(a[0]) - ORD.indexOf(b[0]));
+  const maxT = Math.max(1, ...temp.map((t) => t[1]));
+  const ahora = Date.now();
+  const pend = abiertos.slice().sort((a, b) => ts(a.llamar_antes) - ts(b.llamar_antes)).slice(0, 4);
+  el.innerHTML = `
+    <div class="dir-kpis">
+      <div class="dir-kpi"><b>${d.length}</b><span>Contactos recibidos</span></div>
+      <div class="dir-kpi"><b>${d.filter((f) => f.temperatura === 'Caliente').length}</b><span>Calientes (70 o más)</span></div>
+      <div class="dir-kpi ${abiertos.length ? 'mal' : 'bien'}"><b>${abiertos.length}</b><span>Pendientes de llamar</span></div>
+      <div class="dir-kpi"><b>${media === null ? '–' : media + ' h'}</b><span>Respuesta media</span></div>
+    </div>
+    <div class="dir-cols">
+      <div><h4>Por temperatura</h4>${temp.map(([t, n]) => `<div class="dir-fila"><span>${ESC(t)}</span><div class="dir-pista"><i class="${t === 'Caliente' ? 'mal' : ''}" style="width:${(n / maxT) * 100}%;${t === 'Caliente' ? '' : 'background:var(--accent)'}"></i></div><em>${n}</em></div>`).join('')}</div>
+      <div><h4>Para llamar</h4>${pend.length ? `<ul class="dir-lista">${pend.map((f) => `<li><span>${ESC(f.empresa)}<small>${ESC(f.comercial)} · ${f.puntos} puntos</small></span>${ts(f.llamar_antes) < ahora ? '<span class="mal">Vencido</span>' : `<span class="fin">Antes del ${ESC(aES(f.llamar_antes))}</span>`}</li>`).join('')}</ul>` : '<p class="dir-nota">Todo atendido.</p>'}</div>
+    </div>
+    <p class="dir-nota">Se calcula con los contactos de la hoja: envía uno tuyo y las cifras se mueven. Si un lead caliente no se llama en plazo, salta el recordatorio.</p>`;
 }
 
 fL.addEventListener('submit', (e) => {
