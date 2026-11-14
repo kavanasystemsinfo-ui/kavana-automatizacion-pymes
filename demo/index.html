@@ -19,10 +19,11 @@
     --xl: #107c41; --xl-grid: #d4d4d4; --xl-head: #f3f3f3; --xl-head-ink: #444; --xl-sel: #107c41; --xl-new: #fff2cc; --xl-tuya: #e8f1fb; --xl-tuya-ink: #0f6cbd;
     --shadow: 0 1px 2px rgba(0,0,0,.06), 0 6px 20px rgba(0,0,0,.06);
     --radius: 10px;
+    --z1: #0f6cbd; --z1s: #e1eefb; --z2: #b45309; --z2s: #fdeccf; --z3: #107c41; --z3s: #dcf1e4; --z4: #6d28d9; --z4s: #ece4fb;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  body { margin: 0; background-color: var(--bg); background-image: linear-gradient(180deg, #e6effa 0, #f4f5f7 520px); background-repeat: no-repeat; color: var(--ink); font: 16px/1.5 "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
   main { max-width: 1140px; margin: 0 auto; padding: 28px 16px 64px; }
   h1, h2, h3 { margin: 0; line-height: 1.25; }
   p { margin: 0; }
@@ -42,26 +43,38 @@
   /* Elegir trámite */
   .elige { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
   .opcion { display: flex; gap: 14px; align-items: flex-start; text-align: left; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--line-strong); background: var(--panel); cursor: pointer; }
-  .opcion:hover { border-color: var(--accent); }
-  .opcion[aria-selected="true"] { border: 2px solid var(--accent); padding: 13px 15px; background: var(--accent-soft); }
-  .opcion .ico { flex: none; width: 40px; height: 40px; border-radius: 8px; display: grid; place-items: center; background: var(--panel); color: var(--accent); border: 1px solid var(--line); }
+  .opcion { --oc: var(--accent); }
+  .opcion[data-e="turnos"] { --oc: #0f6cbd; } .opcion[data-e="ausencias"] { --oc: #0d7f7f; } .opcion[data-e="facturas"] { --oc: #c2410c; } .opcion[data-e="leads"] { --oc: #a21caf; }
+  .opcion:hover { border-color: var(--oc); }
+  .opcion[aria-selected="true"] { border: 2px solid var(--oc); padding: 13px 15px; background: color-mix(in srgb, var(--oc) 9%, #fff); box-shadow: 0 4px 14px color-mix(in srgb, var(--oc) 22%, transparent); }
+  .opcion .ico { flex: none; width: 42px; height: 42px; border-radius: 10px; display: grid; place-items: center; background: var(--oc); color: #fff; box-shadow: 0 2px 6px color-mix(in srgb, var(--oc) 40%, transparent); }
   .opcion .ico svg { width: 22px; height: 22px; }
   .opcion b { display: block; font-size: 17px; margin-bottom: 2px; }
   .opcion span { color: var(--soft); font-size: 14px; }
 
-  /* Pasos */
-  .pasos { display: flex; gap: 6px 18px; list-style: none; padding: 0; margin: 0 0 16px; counter-reset: p; flex-wrap: wrap; }
-  .pasos li { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--faint); }
-  .pasos li::before { counter-increment: p; content: counter(p); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; border: 1px solid var(--line-strong); background: var(--panel); }
-  .pasos li.ahora { color: var(--ink); font-weight: 600; }
-  .pasos li.ahora::before { border-color: var(--accent); color: var(--accent); }
-  .pasos li.hecho { color: var(--soft); }
-  .pasos li.hecho::before { content: "✓"; background: var(--good); border-color: var(--good); color: #fff; }
+  /* Pasos: un camino con el color de cada zona */
+  .pasos { display: flex; gap: 10px 28px; list-style: none; padding: 0; margin: 0 0 20px; counter-reset: p; flex-wrap: wrap; }
+  .pasos li { --pc: var(--z1); position: relative; display: flex; align-items: center; gap: 9px; padding: 6px 16px 6px 6px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line-strong); font-size: 14px; font-weight: 600; color: var(--soft); cursor: pointer; }
+  .pasos li:nth-child(2) { --pc: var(--z2); } .pasos li:nth-child(3) { --pc: var(--z3); } .pasos li:nth-child(4) { --pc: var(--z4); }
+  .pasos li:not(:last-child)::after { content: ""; position: absolute; left: 100%; top: 50%; width: 28px; height: 2px; background: var(--line-strong); }
+  .pasos li::before { counter-increment: p; content: counter(p); width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; background: var(--pc); color: #fff; flex: none; }
+  .pasos li:hover { border-color: var(--pc); color: var(--ink); }
+  .pasos li.ahora { color: var(--ink); border-color: var(--pc); box-shadow: 0 0 0 4px color-mix(in srgb, var(--pc) 18%, transparent); }
+  .pasos li.hecho { color: var(--ink); background: color-mix(in srgb, var(--pc) 8%, #fff); border-color: color-mix(in srgb, var(--pc) 45%, #fff); }
+  .pasos li.hecho::before { content: "✓"; }
 
   /* Escena */
   .escena { display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: start; }
-  .zona-tit { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--soft); margin: 0 0 8px 2px; }
-  .zona-tit svg { width: 16px; height: 16px; }
+  .zc1 { --zc: var(--z1); --zs: var(--z1s); } .zc2 { --zc: var(--z2); --zs: var(--z2s); } .zc3 { --zc: var(--z3); --zs: var(--z3s); } .zc4 { --zc: var(--z4); --zs: var(--z4s); }
+  .zona-tit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 16px; font-weight: 700; color: var(--ink); margin: 0 0 10px; }
+  .zona-tit .num { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--zc); color: #fff; font-size: 13px; font-weight: 700; }
+  .zona-tit svg { width: 18px; height: 18px; color: var(--zc); flex: none; }
+  .zona-tit small { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--zc); background: var(--zs); padding: 3px 11px; border-radius: 999px; white-space: nowrap; }
+  .zona-tit.zc1 small { margin-left: 36px; }
+  .ventana.zc1, .ventana.zc2, .ventana.zc3, .ventana.zc4 { border-top: 4px solid var(--zc); box-shadow: 0 0 0 3px var(--zs), var(--shadow); }
+  .movil.zc1 { box-shadow: 0 0 0 5px var(--zs), var(--shadow); }
+  .ventana.zc2 .mail-bar { background: var(--zc); }
+  .dir.zc4 h4 { color: var(--zc); }
 
   /* Móvil con un formulario sencillo */
   .movil { background: #1f2328; border-radius: 34px; padding: 11px; box-shadow: var(--shadow); position: sticky; top: 16px; }
@@ -236,7 +249,9 @@
     .escena { grid-template-columns: 1fr; }
     .elige { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .guia-cuerpo { grid-template-columns: 1fr; }
-    .movil { position: static; background: transparent; padding: 0; box-shadow: none; border-radius: 0; }
+    .movil, .movil.zc1 { position: static; background: transparent; padding: 0; box-shadow: none; border-radius: 0; }
+    .pasos li:not(:last-child)::after { display: none; }
+    .pasos { gap: 8px; }
     .pantalla { border-radius: var(--radius); border: 1px solid var(--line-strong); }
   }
   @media (max-width: 640px) {
@@ -286,6 +301,7 @@
     <li class="ahora">Rellena el formulario</li>
     <li>Llega el correo</li>
     <li>Queda apuntado en la hoja</li>
+    <li>Lo ve la dirección</li>
   </ol>
 
   <!-- ============ Parte de fin de turno ============ -->
@@ -635,7 +651,7 @@ const pedida = location.hash.slice(1);
 let escena = ESCENAS.includes(pedida) ? pedida : ESCENAS.includes(leer('informe-demo-pestana')) ? leer('informe-demo-pestana') : 'turnos';
 function pintarPasos() {
   const n = progreso[escena];
-  document.querySelectorAll('#pasos li').forEach((li, i) => { li.className = i < n ? 'hecho' : i === n ? 'ahora' : ''; });
+  document.querySelectorAll('#pasos li').forEach((li, i) => { li.className = i < n ? 'hecho' : i === n ? 'ahora' : ''; li.hidden = i === 3 && escena === 'ausencias'; });
 }
 function abrir(e) {
   escena = e;
@@ -660,6 +676,22 @@ document.querySelectorAll('.opcion').forEach((b) => {
   });
 });
 abrir(escena);
+
+// Cada zona lleva su número y su color; son los mismos que los de los pasos de arriba.
+const PASOS_TXT = ['Rellena el formulario', 'Llega el correo', 'Queda apuntado', 'Lo ve la dirección'];
+document.querySelectorAll('.escena').forEach((sec) => sec.querySelectorAll('.zona-tit').forEach((t, i) => {
+  if (i > 3) return;
+  t.classList.add('zc' + (i + 1));
+  const n = document.createElement('span'); n.className = 'num'; n.textContent = i + 1; t.prepend(n);
+  const p = document.createElement('small'); p.textContent = PASOS_TXT[i]; t.append(p);
+  if (t.nextElementSibling) t.nextElementSibling.classList.add('zc' + (i + 1));
+}));
+document.querySelectorAll('#pasos li').forEach((li, i) => {
+  li.tabIndex = 0; li.setAttribute('role', 'button');
+  const ir = () => document.getElementById('escena-' + escena).querySelectorAll('.zona-tit')[i]?.scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: 'start' });
+  li.addEventListener('click', ir);
+  li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ir(); } });
+});
 
 // ---------- Hoja de cálculo ----------
 const LETRAS = 'ABCDEFGHIJKLMNOP';
