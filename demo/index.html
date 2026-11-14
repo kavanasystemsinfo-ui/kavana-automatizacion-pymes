@@ -117,6 +117,28 @@
 
   /* Ventanas de la oficina */
   .oficina { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+  /* Panel de dirección (parte de turno): se calcula con los partes de la hoja */
+  .dir { padding: 16px; display: grid; gap: 16px; }
+  .dir-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .dir-kpi { background: var(--bg); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+  .dir-kpi b { display: block; font-size: 22px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .dir-kpi span { font-size: 12px; color: var(--soft); }
+  .dir-kpi.mal b { color: var(--bad); }
+  .dir-kpi.bien b { color: var(--good); }
+  .dir-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; }
+  .dir h4 { margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: var(--soft); }
+  .dir-fila { display: grid; grid-template-columns: 112px 1fr 52px; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 7px; }
+  .dir-pista { height: 8px; border-radius: 99px; background: var(--line); position: relative; overflow: hidden; }
+  .dir-pista i { display: block; height: 100%; background: var(--good); }
+  .dir-pista i.mal { background: var(--bad); }
+  .dir-pista.meta::after { content: ""; position: absolute; left: 80%; top: 0; bottom: 0; width: 2px; background: var(--ink); opacity: .4; }
+  .dir-fila em { font-style: normal; text-align: right; font-variant-numeric: tabular-nums; color: var(--soft); }
+  .dir-dias { display: flex; align-items: flex-end; gap: 6px; height: 92px; }
+  .dir-dia { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; font-size: 11px; color: var(--soft); }
+  .dir-dia i { display: block; width: 100%; max-width: 34px; border-radius: 4px 4px 0 0; background: var(--accent); }
+  .dir-dia i.mal { background: var(--bad); }
+  .dir-nota { font-size: 12px; color: var(--faint); }
+  @media (max-width: 560px) { .dir-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dir-fila { grid-template-columns: 96px 1fr 48px; } }
   .ventana { background: var(--panel); border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: var(--shadow); overflow: hidden; min-width: 0; }
 
   /* Correo: lista de mensajes y panel de lectura */
@@ -334,6 +356,10 @@
           <div class="hoja"><table><thead></thead><tbody></tbody></table></div>
           <div class="xl-pie"><span class="tab">Partes</span><span class="info">Última semana de la planta de ejemplo. Tus partes van al final, en azul.</span></div>
         </div>
+      </div>
+      <div>
+        <p class="zona-tit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Lo que ve la dirección de la planta</p>
+        <div class="ventana dir" id="dir-turnos" aria-live="polite"></div>
       </div>
     </div>
   </section>
@@ -774,7 +800,39 @@ async function cargarTurnos(nuevo) {
   filas.forEach((f) => { f.__clave = f.registrado_en; });
   if (filas.some((f) => f.tuya) && !progreso.turnos) progreso.turnos = 3;
   pintarHoja(sT, COL_T, filas, nuevo);
+  pintarDireccion(filas);
   if (escena === 'turnos') pintarPasos();
+}
+
+// Resumen para la dirección: se calcula al vuelo con los partes que ya están en la hoja (los de ejemplo y los tuyos).
+function pintarDireccion(filas) {
+  const el = document.getElementById('dir-turnos');
+  const datos = filas.filter((f) => f.linea && Number(f.objetivo) > 0);
+  if (!datos.length) { el.innerHTML = '<p class="dir-nota">Aún no hay partes que resumir.</p>'; return; }
+  const suma = (arr, k) => arr.reduce((a, f) => a + (Number(f[k]) || 0), 0);
+  const efi = (arr) => (suma(arr, 'metros') / suma(arr, 'objetivo')) * 100;
+  const global = efi(datos);
+  const avisos = datos.filter((f) => f.aviso).length;
+  const paradas = suma(datos, 'paradas_total');
+  const por = (clave) => { const m = new Map(); datos.forEach((f) => { const k = f[clave]; if (!m.has(k)) m.set(k, []); m.get(k).push(f); }); return [...m]; };
+  const lineas = por('linea').map(([n, a]) => [n, efi(a), a.length]).sort((a, b) => b[1] - a[1]);
+  const dias = por('fecha').map(([d, a]) => [d, efi(a)]).slice(-7);
+  const motivos = Object.entries(MOTIVOS).map(([k, m]) => [m[0].toUpperCase() + m.slice(1), suma(datos, k)])
+    .filter((m) => m[1] > 0).sort((a, b) => b[1] - a[1]);
+  const maxM = Math.max(1, ...motivos.map((m) => m[1]));
+  el.innerHTML = `
+    <div class="dir-kpis">
+      <div class="dir-kpi ${global < 80 ? 'mal' : 'bien'}"><b>${pct(global)}</b><span>Eficiencia global</span></div>
+      <div class="dir-kpi"><b>${datos.length}</b><span>Partes registrados</span></div>
+      <div class="dir-kpi ${avisos ? 'mal' : 'bien'}"><b>${avisos}</b><span>Turnos bajo el 80 %</span></div>
+      <div class="dir-kpi"><b>${NF.format(Math.round(paradas / 60))} h</b><span>Paradas en total</span></div>
+    </div>
+    <div class="dir-cols">
+      <div><h4>Eficiencia por línea</h4>${lineas.map(([n, e, c]) => `<div class="dir-fila"><span>${ESC(n)}</span><div class="dir-pista meta"><i class="${e < 80 ? 'mal' : ''}" style="width:${Math.min(100, e)}%"></i></div><em>${pct(e)}</em></div>`).join('')}</div>
+      <div><h4>Minutos de parada por motivo</h4>${motivos.length ? motivos.map(([m, v]) => `<div class="dir-fila"><span>${ESC(m)}</span><div class="dir-pista"><i style="width:${(v / maxM) * 100}%;background:var(--accent)"></i></div><em>${NF.format(v)}</em></div>`).join('') : '<p class="dir-nota">Sin paradas.</p>'}</div>
+    </div>
+    <div><h4>Eficiencia por día</h4><div class="dir-dias">${dias.map(([d, e]) => `<div class="dir-dia" title="${ESC(`${String(d).slice(8, 10)}/${String(d).slice(5, 7)}`)}: ${pct(e)}"><i class="${e < 80 ? 'mal' : ''}" style="height:${Math.max(6, Math.min(100, e)) * 0.7}%"></i><span>${ESC(`${String(d).slice(8, 10)}/${String(d).slice(5, 7)}`)}</span></div>`).join('')}</div></div>
+    <p class="dir-nota">Se calcula solo con los partes de la hoja: añade uno tuyo y las cifras se mueven. La marca de las barras señala el 80 %.</p>`;
 }
 
 fT.fecha.value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
