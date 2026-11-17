@@ -261,6 +261,23 @@
     .opcion[aria-selected="true"] { padding: 11px; }
     .xl-pie .info { display: none; }
   }
+  /* Recorrido guiado */
+  .tour-boton { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 10px 16px; border-radius: 999px; border: 2px solid var(--accent); background: #fff; color: var(--accent); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .tour-boton:hover { background: var(--accent-soft); }
+  .tour-boton svg { width: 18px; height: 18px; }
+  .tour-capa { position: fixed; inset: 0; z-index: 1000; background: transparent; }
+  .tour-foco { position: fixed; z-index: 1001; pointer-events: none; border-radius: 10px; box-shadow: 0 0 0 3px var(--accent), 0 0 0 9999px rgba(15, 23, 42, .58); transition: top .2s, left .2s, width .2s, height .2s; }
+  .tour-tarjeta { position: fixed; z-index: 1002; width: min(400px, calc(100vw - 16px)); background: #fff; color: var(--ink); border-radius: 12px; border: 1px solid var(--line-strong); box-shadow: 0 10px 40px rgba(0, 0, 0, .3); padding: 16px 18px; }
+  .tour-tarjeta .tour-cont { margin: 0 0 4px; font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: .04em; text-transform: uppercase; }
+  .tour-tarjeta h3 { margin: 0 0 6px; font-size: 18px; }
+  .tour-tarjeta p { margin: 0; font-size: 15px; line-height: 1.45; color: var(--soft); }
+  .tour-botones { display: flex; gap: 8px; align-items: center; margin-top: 14px; }
+  .tour-botones .tour-saltar { margin-right: auto; background: none; border: 0; padding: 8px 4px; color: var(--soft); font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer; }
+  .tour-botones button.tour-sec, .tour-botones button.tour-sig { min-height: 40px; padding: 8px 16px; border-radius: 8px; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .tour-botones button.tour-sec { border: 1px solid var(--line-strong); background: #fff; color: var(--ink); }
+  .tour-botones button.tour-sig { border: 0; background: var(--accent); color: var(--accent-ink); }
+  .tour-botones button:disabled { opacity: .4; cursor: default; }
+  .tour-botones button:focus-visible, .tour-boton:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 </style>
 </head>
@@ -276,6 +293,7 @@
       <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>No se envía ningún correo de verdad</span>
       <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>Lo tuyo solo lo ves tú y se borra a las 2 h</span>
     </div>
+    <button type="button" class="tour-boton" id="tour-abrir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4z"/></svg>Hacer el recorrido guiado</button>
   </header>
 
   <div class="elige" role="tablist" aria-label="Elige qué quieres probar">
@@ -1442,6 +1460,143 @@ abrirCorreo(sF, 0);
 cargarFacturas().catch((err) => mostrarError(sF, err.message));
 abrirCorreo(sL, 0);
 cargarLeads().catch((err) => mostrarError(sL, err.message));
+
+// ---------- Recorrido guiado ----------
+// Un recorrido por trámite. Cada paso: [selector dentro del trámite, título, texto].
+const RECORRIDOS = {
+  turnos: [
+    ['.movil', 'El móvil del operario', 'Así lo rellena en menos de un minuto: turno, línea, cantidad fabricada y minutos de parada. Ya trae datos de ejemplo.'],
+    ['#vivo-turnos', 'La eficiencia sale sola', 'Mientras cambias la cantidad se calcula la eficiencia. Bájala por debajo del 80 % y verás el aviso.'],
+    ['.movil .enviar', 'Enviar el parte', 'Púlsalo cuando quieras. No se envía ningún correo de verdad y lo tuyo se borra a las 2 horas.'],
+    ['.buzon', 'El correo del jefe de turno', 'Aquí llega el resumen. Si la eficiencia baja del 80 %, trae un aviso y el motivo principal de parada.'],
+    ['.excel', 'La hoja de la oficina', 'Tu parte se apunta al final, en azul, debajo de la última semana de la planta. Con Descargar te llevas el Excel.'],
+    ['.dir', 'Lo que ve la dirección', 'Un resumen con las cifras de la planta, sin que nadie tenga que pasar datos a limpio.'],
+  ],
+  ausencias: [
+    ['.movil', 'El móvil del empleado', 'Elige quién eres, qué pides y las fechas. Verás los días laborables y si coincides con un compañero.'],
+    ['#vivo-ausencias', 'Coincidencias al momento', 'Las fechas propuestas coinciden a propósito con Iván Ruiz, para que veas el aviso.'],
+    ['.movil .enviar', 'Pedir los días', 'Púlsalo cuando quieras. No se envía ningún correo de verdad.'],
+    ['.buzon', 'El correo de la responsable', 'Aprueba o rechaza con un clic, desde el correo o desde la hoja. El empleado recibe la respuesta.'],
+    ['.excel', 'La hoja de la oficina', 'Todo queda apuntado en la hoja. Con Descargar te llevas el Excel.'],
+  ],
+  facturas: [
+    ['.movil', 'La factura del proveedor', 'Rellenas los datos tal como vienen en la factura: proveedor, pedido, base, total y cuenta de pago.'],
+    ['.movil .enviar', 'Cinco comprobaciones', 'Proveedor dado de alta, base + IVA = total, no duplicada, coincide con el pedido y cuenta bancaria de la ficha. Prueba a cambiar la cuenta.'],
+    ['.buzon', 'El correo', 'Si todo cuadra, se contabiliza y se programa el pago. Si no, queda retenida y avisa de qué falla.'],
+    ['.excel', 'La hoja de la oficina', 'Cada factura queda apuntada con su resultado. Con Descargar te llevas el Excel.'],
+    ['.dir', 'Lo que ve contabilidad', 'El estado de las facturas de un vistazo: las que pasan solas y las que quedan retenidas.'],
+  ],
+  leads: [
+    ['.movil', 'La consulta del cliente', 'Es lo que rellena alguien que pide presupuesto desde la web: empresa, zona, producto, volumen y plazo.'],
+    ['.movil .enviar', 'Enviar la consulta', 'Púlsalo cuando quieras. No se envía ningún correo de verdad.'],
+    ['.buzon', 'El correo del comercial', 'Cada consulta se puntúa de 0 a 100 con reglas fijas y va al comercial de su zona, con un plazo para llamar.'],
+    ['.excel', 'La hoja de la oficina', 'La consulta queda apuntada con su puntuación. Con Descargar te llevas el Excel.'],
+    ['.dir', 'Lo que ve la dirección comercial', 'Cuántas consultas entran, de qué zonas y cuáles nadie ha atendido.'],
+  ],
+};
+const NOMBRES = { turnos: 'Parte de fin de turno', ausencias: 'Vacaciones y permisos', facturas: 'Facturas de proveedores', leads: 'Contactos de clientes' };
+
+(function () {
+  const claveVisto = (e) => 'informe-demo-recorrido-' + e;
+  let activo = null; // { e, pasos, i, previo }
+  let capa, foco, tarjeta, pendiente;
+
+  function objetivo(e, sel) {
+    let el = document.querySelector('#escena-' + e + ' ' + sel);
+    if (el && (sel === '.buzon' || sel === '.excel' || sel === '.dir')) el = el.closest('.ventana') || el;
+    return el && el.offsetParent !== null ? el : null;
+  }
+  function pasosDe(e) { return RECORRIDOS[e].filter((p) => objetivo(e, p[0])); }
+
+  function poner() {
+    if (!activo) return;
+    const [sel, titulo, texto] = activo.pasos[activo.i];
+    const el = objetivo(activo.e, sel);
+    if (!el) { siguiente(); return; }
+    const vh = innerHeight, vw = innerWidth;
+    const r = el.getBoundingClientRect();
+    const arriba = Math.max(r.top, 8), abajo = Math.min(r.bottom, vh - 8);
+    const izq = Math.max(r.left, 8), der = Math.min(r.right, vw - 8);
+    const m = 6;
+    foco.style.top = (arriba - m) + 'px'; foco.style.left = (izq - m) + 'px';
+    foco.style.width = Math.max(der - izq + 2 * m, 20) + 'px'; foco.style.height = Math.max(abajo - arriba + 2 * m, 20) + 'px';
+    const th = tarjeta.offsetHeight, tw = tarjeta.offsetWidth;
+    const centro = (arriba + abajo) / 2;
+    let top = centro < vh / 2 ? Math.min(abajo + m + 12, vh - th - 8) : Math.max(arriba - m - 12 - th, 8);
+    let left = Math.min(Math.max((izq + der) / 2 - tw / 2, 8), vw - tw - 8);
+    tarjeta.style.top = top + 'px'; tarjeta.style.left = left + 'px';
+  }
+  function reposicionar() { if (pendiente) return; pendiente = requestAnimationFrame(() => { pendiente = null; poner(); }); }
+
+  function pintarPaso() {
+    const [sel, titulo, texto] = activo.pasos[activo.i];
+    const n = activo.pasos.length, ultimo = activo.i === n - 1;
+    const hayOtro = ESCENAS.indexOf(activo.e) < ESCENAS.length - 1;
+    tarjeta.innerHTML = '<p class="tour-cont">' + ESC(NOMBRES[activo.e]) + ' · paso ' + (activo.i + 1) + ' de ' + n + '</p>'
+      + '<h3 id="tour-tit">' + ESC(titulo) + '</h3><p>' + ESC(texto) + '</p>'
+      + '<div class="tour-botones"><button type="button" class="tour-saltar">Cerrar</button>'
+      + '<button type="button" class="tour-sec" ' + (activo.i === 0 ? 'disabled' : '') + '>Anterior</button>'
+      + '<button type="button" class="tour-sig">' + (ultimo ? (hayOtro ? 'Siguiente trámite' : 'Terminar') : 'Siguiente') + '</button></div>';
+    tarjeta.querySelector('.tour-saltar').onclick = () => cerrar(true);
+    tarjeta.querySelector('.tour-sec').onclick = anterior;
+    tarjeta.querySelector('.tour-sig').onclick = siguiente;
+    const el = objetivo(activo.e, sel);
+    if (el) {
+      const alto = el.getBoundingClientRect().height > innerHeight * 0.6;
+      el.scrollIntoView({ block: alto ? 'start' : 'center', behavior: reducido ? 'auto' : 'smooth' });
+    }
+    poner();
+    setTimeout(poner, 250); setTimeout(poner, 600);
+    tarjeta.querySelector('.tour-sig').focus({ preventScroll: true });
+  }
+  function anterior() { if (activo && activo.i > 0) { activo.i--; pintarPaso(); } }
+  function siguiente() {
+    if (!activo) return;
+    if (activo.i < activo.pasos.length - 1) { activo.i++; pintarPaso(); return; }
+    const e = activo.e, k = ESCENAS.indexOf(e);
+    cerrar(true);
+    if (k < ESCENAS.length - 1) { abrir(ESCENAS[k + 1]); setTimeout(() => empezar(ESCENAS[k + 1]), 350); }
+  }
+  function alTeclado(ev) {
+    if (!activo) return;
+    if (ev.key === 'Escape') { ev.preventDefault(); cerrar(true); }
+    else if (ev.key === 'ArrowRight') { ev.preventDefault(); siguiente(); }
+    else if (ev.key === 'ArrowLeft') { ev.preventDefault(); anterior(); }
+  }
+  function cerrar(marcar) {
+    if (!activo) return;
+    if (marcar) guardar(claveVisto(activo.e), 'visto');
+    const previo = activo.previo;
+    activo = null;
+    [capa, foco, tarjeta].forEach((x) => x && x.remove());
+    removeEventListener('resize', reposicionar); removeEventListener('scroll', reposicionar, true);
+    removeEventListener('keydown', alTeclado, true);
+    if (previo && previo.focus) previo.focus({ preventScroll: true });
+  }
+  function empezar(e) {
+    cerrar(false);
+    const pasos = pasosDe(e);
+    if (!pasos.length) return;
+    capa = document.createElement('div'); capa.className = 'tour-capa';
+    foco = document.createElement('div'); foco.className = 'tour-foco';
+    tarjeta = document.createElement('div'); tarjeta.className = 'tour-tarjeta';
+    tarjeta.setAttribute('role', 'dialog'); tarjeta.setAttribute('aria-modal', 'true'); tarjeta.setAttribute('aria-labelledby', 'tour-tit');
+    document.body.append(capa, foco, tarjeta);
+    activo = { e, pasos, i: 0, previo: document.activeElement };
+    addEventListener('resize', reposicionar); addEventListener('scroll', reposicionar, true);
+    addEventListener('keydown', alTeclado, true);
+    pintarPaso();
+  }
+
+  document.getElementById('tour-abrir').addEventListener('click', () => empezar(escena));
+  // La primera vez que se entra en cada trámite, el recorrido se abre solo; después, con el botón.
+  const abrirOriginal = abrir;
+  abrir = function (e) {
+    abrirOriginal(e);
+    if (!activo && leer(claveVisto(e)) !== 'visto') setTimeout(() => { if (escena === e && !activo) empezar(e); }, 700);
+  };
+  if (leer(claveVisto(escena)) !== 'visto') setTimeout(() => { if (!activo) empezar(escena); }, 1200);
+})();
 </script>
 </body>
 </html>
