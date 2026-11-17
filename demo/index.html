@@ -264,6 +264,7 @@
   /* Recorrido guiado */
   .tour-boton { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 10px 16px; border-radius: 999px; border: 2px solid var(--accent); background: #fff; color: var(--accent); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
   .tour-boton:hover { background: var(--accent-soft); }
+  .tour-boton-escena { margin: 0 0 12px; }
   .tour-boton svg { width: 18px; height: 18px; }
   .tour-capa { position: fixed; inset: 0; z-index: 1000; background: transparent; }
   .tour-foco { position: fixed; z-index: 1001; pointer-events: none; border-radius: 10px; box-shadow: 0 0 0 3px var(--accent), 0 0 0 9999px rgba(15, 23, 42, .58); transition: top .2s, left .2s, width .2s, height .2s; }
@@ -1589,6 +1590,16 @@ const NOMBRES = { turnos: 'Parte de fin de turno', ausencias: 'Vacaciones y perm
   }
 
   document.getElementById('tour-abrir').addEventListener('click', () => empezar(escena));
+  // Cada trámite lleva además su propio botón, justo encima de la guía, para repetir su recorrido.
+  ESCENAS.forEach((e) => {
+    const guia = document.querySelector('#escena-' + e + ' .guia');
+    if (!guia) return;
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'tour-boton tour-boton-escena';
+    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4z"/></svg>Ver el recorrido de este trámite';
+    b.addEventListener('click', () => empezar(e));
+    guia.before(b);
+  });
   // La primera vez que se entra en cada trámite, el recorrido se abre solo; después, con el botón.
   const abrirOriginal = abrir;
   abrir = function (e) {
